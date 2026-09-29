@@ -27,7 +27,6 @@ import {
   Globe,
   MapPin,
   Link2,
-  Network,
   Lock,
   XCircle,
   Info,
@@ -40,7 +39,6 @@ import {
   Share2,
   Terminal,
   Copy,
-  Bell,
   FileSearch,
   type LucideIcon,
 } from 'lucide-react';
@@ -52,8 +50,6 @@ import {
   type InfraLocation,
   type AttackGraphNode as AGNode,
   type GraphNodeType,
-  CAMPAIGNS,
-  SECURITY_ALERTS,
 } from '@/data/mockData';
 import { CopyButton } from '@/components/CopyButton';
 import { DarkCyberMap } from '@/components/DarkCyberMap';
@@ -116,8 +112,6 @@ export type ReportContentTab =
   | 'threat-intel'
   | 'origin'
   | 'attack-graph'
-  | 'campaigns'
-  | 'alerts'
   | 'attachments';
 
 export function ReportsPage({ onNavigate }: { onNavigate?: (route: string) => void }) {
@@ -919,8 +913,6 @@ function FullReportPreview({
           { id: 'threat-intel', label: 'Certificate Vault', icon: ShieldCheck },
           { id: 'origin', label: 'Session Mapping', icon: MapPin },
           { id: 'attack-graph', label: 'Attack Graph', icon: Share2 },
-          { id: 'campaigns', label: 'TLS Campaigns', icon: Network },
-          { id: 'alerts', label: 'Crypto Alerts', icon: Bell },
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -1421,91 +1413,7 @@ function FullReportPreview({
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 6: TLS CAMPAIGNS & CORRELATED CLUSTERS
-      ══════════════════════════════════════════════════════════════════════ */}
-      {(activeTab === 'all' || activeTab === 'campaigns') && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 flex items-center gap-2">
-              <Network className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-              6. TLS Campaigns &amp; Correlated Cryptographic Clusters
-            </h2>
-            <span className="text-[11px] font-mono text-cyan-600 dark:text-cyan-400">
-              Active Campaigns Tracking
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {CAMPAIGNS.slice(0, 2).map((camp) => (
-              <div
-                key={camp.id}
-                className="p-5 rounded-2xl bg-white dark:bg-[#11121b] border border-slate-200 dark:border-white/10 space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-cyan-500">{camp.id}</span>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">{camp.name}</span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20">
-                    {camp.severity}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">{camp.description}</p>
-                <div className="flex items-center gap-4 text-[11px] font-mono text-slate-500 dark:text-gray-400 pt-2 border-t border-slate-100 dark:border-white/5">
-                  <span>Sessions: <strong className="text-slate-900 dark:text-white">{camp.emails}</strong></span>
-                  <span>IOCs: <strong className="text-slate-900 dark:text-white">{camp.indicators}</strong></span>
-                  <span>Confidence: <strong className="text-cyan-500">{camp.confidence}%</strong></span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 7: CRYPTO ALERTS & REAL-TIME THREAT DETECTIONS
-      ══════════════════════════════════════════════════════════════════════ */}
-      {(activeTab === 'all' || activeTab === 'alerts') && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-              7. Crypto Alerts &amp; Real-Time Threat Detections
-            </h2>
-            <span className="text-[11px] font-mono text-cyan-600 dark:text-cyan-400">
-              Active Security Alerts
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {SECURITY_ALERTS.slice(0, 2).map((alr) => (
-              <div
-                key={alr.id}
-                className="p-4 rounded-2xl bg-white dark:bg-[#11121b] border border-slate-200 dark:border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3"
-              >
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs font-bold text-purple-400">{alr.id}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/10 text-red-400 border border-red-500/20 font-mono">
-                      {alr.severity}
-                    </span>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white">{alr.type}</span>
-                    <span className="text-[10px] text-slate-500 dark:text-gray-500 font-mono">{alr.detected}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-gray-400">{alr.summary}</p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <span className="text-[11px] font-mono text-cyan-400 font-bold block">{alr.source}</span>
-                  <span className="text-[10px] text-gray-500">{alr.status.toUpperCase()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 8: HANDSHAKE PAYLOAD & PACKET FORENSICS
+          SECTION 6: HANDSHAKE PAYLOAD & PACKET FORENSICS
       ══════════════════════════════════════════════════════════════════════ */}
       {(activeTab === 'all' || activeTab === 'attachments') && (
         <AttachmentForensicsSection
@@ -1530,7 +1438,7 @@ function FullReportPreview({
           }}
           rawAnalysisResult={result}
           sectionTitle="Handshake Payload & Packet Stream Forensics"
-          sectionPrefix="8."
+          sectionPrefix="6."
         />
       )}
     </div>
