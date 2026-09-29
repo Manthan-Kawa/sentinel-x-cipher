@@ -1,32 +1,30 @@
-import { useState, useMemo, useRef, useLayoutEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
-  Mail,
+  Lock,
+  ShieldAlert,
   ShieldCheck,
   AlertTriangle,
-  ShieldAlert,
-  RefreshCw,
   Search,
-  Filter,
+  Upload,
+  ClipboardList,
+  RefreshCw,
   Eye,
-  ChevronLeft,
-  ChevronRight,
-  Send,
-  Sparkles,
-  Inbox,
-  Calendar,
-  User,
-  Shield,
-  Clock,
+  Server,
+  Globe,
+  Activity,
   CheckCircle2,
-  Check,
-  Link2Off,
+  XCircle,
+  X,
+  Radio,
+  Sparkles,
+  ArrowRight,
+  ExternalLink,
+  ChevronRight,
+  ChevronLeft,
+  Key,
+  Cpu,
+  FileCode,
 } from 'lucide-react';
-import { useEmailIngestion } from '@/contexts/EmailIngestionContext';
-import { type IngestedEmail, type ThreatLevel, decodeMimeHeader, generateRealisticCleanScore } from '@/services/emailIngestionService';
-import { EmailDetailDrawer } from '@/components/EmailDetailDrawer';
-import { GoogleSetupModal } from '@/components/GoogleSetupModal';
-import { GoogleAuthService } from '@/services/googleAuthService';
-import { UserNotificationService } from '@/services/userNotificationService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTickets } from '@/contexts/TicketContext';
 import { SlideIn } from '@/components/SlideIn';
@@ -35,1032 +33,1024 @@ interface EmailsPageProps {
   onNavigate: (route: string, opts?: { role?: 'analyst' | 'user' }) => void;
 }
 
+export type SessionPosture = 'secure' | 'warning' | 'critical';
+export type TlsVersion = 'TLS 1.3' | 'TLS 1.2' | 'TLS 1.0' | 'SSL 3.0';
+
+export interface NetworkSession {
+  id: string;
+  timestamp: string;
+  clientIp: string;
+  serverHost: string;
+  serverIp: string;
+  serverPort: number;
+  sni: string;
+  protocol: string;
+  tlsVersion: TlsVersion;
+  cipherSuite: string;
+  keyExchange: string;
+  posture: SessionPosture;
+  threatScore: number;
+  alpn: string;
+  certificate: {
+    subject: string;
+    issuer: string;
+    validity: string;
+    isExpired: boolean;
+    keyType: string;
+    sigAlg: string;
+    status: 'valid' | 'expired' | 'self-signed' | 'weak-key';
+  };
+  vulnerabilities: string[];
+  recommendation: string;
+  bytesTransferred: string;
+  durationMs: number;
+}
+
+const MOCK_SESSIONS: NetworkSession[] = [
+  {
+    id: 'SESS-9821-TLS',
+    timestamp: 'Just now',
+    clientIp: '192.168.1.104:54320',
+    serverHost: 'api.payment-auth.net',
+    serverIp: '104.21.54.12',
+    serverPort: 443,
+    sni: 'api.payment-auth.net',
+    protocol: 'HTTPS / 443',
+    tlsVersion: 'TLS 1.3',
+    cipherSuite: 'TLS_AES_256_GCM_SHA384',
+    keyExchange: 'ECDH (x25519) - 253 bits',
+    posture: 'secure',
+    threatScore: 4,
+    alpn: 'h2',
+    certificate: {
+      subject: 'CN=api.payment-auth.net, O=Cloud Payments Inc, C=US',
+      issuer: 'Let\'s Encrypt Authority R3',
+      validity: 'Valid (Expires in 64 days)',
+      isExpired: false,
+      keyType: 'ECC P-256',
+      sigAlg: 'SHA256withECDSA',
+      status: 'valid',
+    },
+    vulnerabilities: [],
+    recommendation: 'Session complies with strict cryptographic posture standards. Modern forward secrecy enabled.',
+    bytesTransferred: '142.8 KB',
+    durationMs: 82,
+  },
+  {
+    id: 'SESS-9784-SMTP',
+    timestamp: '3m ago',
+    clientIp: '192.168.1.104:49812',
+    serverHost: 'mail-legacy.telecom-partner.org',
+    serverIp: '185.220.101.47',
+    serverPort: 465,
+    sni: 'mail-legacy.telecom-partner.org',
+    protocol: 'SMTPS / 465',
+    tlsVersion: 'TLS 1.0',
+    cipherSuite: 'TLS_RSA_WITH_3DES_EDE_CBC_SHA',
+    keyExchange: 'Static RSA (No Forward Secrecy)',
+    posture: 'critical',
+    threatScore: 94,
+    alpn: 'none',
+    certificate: {
+      subject: 'CN=mail-legacy.telecom-partner.org, OU=IT Dept',
+      issuer: 'Untrusted Enterprise Self-Signed Root CA',
+      validity: 'Expired (Expired 28 days ago)',
+      isExpired: true,
+      keyType: 'RSA 1024-bit',
+      sigAlg: 'SHA1withRSA',
+      status: 'expired',
+    },
+    vulnerabilities: [
+      'SWEET32 64-bit block cipher attack (CVE-2016-2183)',
+      'Deprecated TLS 1.0 protocol (RFC 8996 violation)',
+      'Static RSA key exchange (Lacks Perfect Forward Secrecy)',
+      'Expired X.509 certificate with weak 1024-bit RSA key',
+    ],
+    recommendation: 'Immediate action: Terminate connection. Enforce TLS 1.3/1.2 minimum and upgrade server certificate to 2048-bit RSA or ECC P-256.',
+    bytesTransferred: '2.4 MB',
+    durationMs: 420,
+  },
+  {
+    id: 'SESS-9650-IMAP',
+    timestamp: '9m ago',
+    clientIp: '192.168.1.104:51204',
+    serverHost: 'imap.corporate-mail.internal',
+    serverIp: '172.16.4.22',
+    serverPort: 993,
+    sni: 'imap.corporate-mail.internal',
+    protocol: 'IMAPS / 993',
+    tlsVersion: 'TLS 1.2',
+    cipherSuite: 'ECDHE-RSA-AES128-GCM-SHA256',
+    keyExchange: 'ECDH (secp256r1) - 256 bits',
+    posture: 'secure',
+    threatScore: 12,
+    alpn: 'imap',
+    certificate: {
+      subject: 'CN=imap.corporate-mail.internal, O=Internal Mail Infrastructure',
+      issuer: 'Corporate Internal PKI Sub-CA 1',
+      validity: 'Valid (Expires in 280 days)',
+      isExpired: false,
+      keyType: 'RSA 2048-bit',
+      sigAlg: 'SHA256withRSA',
+      status: 'valid',
+    },
+    vulnerabilities: [],
+    recommendation: 'Cryptographic configuration is solid. Recommend scheduling TLS 1.3 enablement during next maintenance window.',
+    bytesTransferred: '680.5 KB',
+    durationMs: 145,
+  },
+  {
+    id: 'SESS-9512-VPN',
+    timestamp: '18m ago',
+    clientIp: '192.168.1.104:48122',
+    serverHost: 'gateway-us-east.remote-vpn.net',
+    serverIp: '198.51.100.88',
+    serverPort: 443,
+    sni: 'gateway-us-east.remote-vpn.net',
+    protocol: 'HTTPS / 443',
+    tlsVersion: 'TLS 1.2',
+    cipherSuite: 'TLS_RSA_WITH_RC4_128_SHA',
+    keyExchange: 'Static RSA (No Forward Secrecy)',
+    posture: 'critical',
+    threatScore: 91,
+    alpn: 'http/1.1',
+    certificate: {
+      subject: 'CN=gateway-us-east.remote-vpn.net, O=VPN Services Ltd',
+      issuer: 'Sectigo RSA Domain Validation CA',
+      validity: 'Valid (Expires in 110 days)',
+      isExpired: false,
+      keyType: 'RSA 2048-bit',
+      sigAlg: 'SHA256withRSA',
+      status: 'valid',
+    },
+    vulnerabilities: [
+      'RC4 broken stream cipher (RFC 7465 prohibited)',
+      'Static RSA key exchange vulnerable to passive decryption',
+      'Potential Man-in-the-Middle cipher downgrade detected',
+    ],
+    recommendation: 'Remove RC4 from server cipher suites. Enforce modern AEAD suites (AES-GCM or CHACHA20-POLY1305).',
+    bytesTransferred: '5.1 MB',
+    durationMs: 890,
+  },
+  {
+    id: 'SESS-9440-WEB',
+    timestamp: '25m ago',
+    clientIp: '192.168.1.104:53991',
+    serverHost: 'cdn.static-assets.cloud',
+    serverIp: '151.101.65.140',
+    serverPort: 443,
+    sni: 'cdn.static-assets.cloud',
+    protocol: 'HTTPS / 443',
+    tlsVersion: 'TLS 1.3',
+    cipherSuite: 'TLS_CHACHA20_POLY1305_SHA256',
+    keyExchange: 'ECDH (x25519) - 253 bits',
+    posture: 'secure',
+    threatScore: 2,
+    alpn: 'h2',
+    certificate: {
+      subject: 'CN=*.static-assets.cloud, O=Global CDN Corp',
+      issuer: 'DigiCert Global Root G2',
+      validity: 'Valid (Expires in 312 days)',
+      isExpired: false,
+      keyType: 'ECC P-384',
+      sigAlg: 'SHA384withECDSA',
+      status: 'valid',
+    },
+    vulnerabilities: [],
+    recommendation: 'Optimal cryptographic setup with quantum-resistant forward secrecy and high-speed AEAD encryption.',
+    bytesTransferred: '1.8 MB',
+    durationMs: 64,
+  },
+  {
+    id: 'SESS-9302-API',
+    timestamp: '42m ago',
+    clientIp: '192.168.1.104:56102',
+    serverHost: 'legacy-billing.vendor-connect.io',
+    serverIp: '203.0.113.45',
+    serverPort: 443,
+    sni: 'legacy-billing.vendor-connect.io',
+    protocol: 'HTTPS / 443',
+    tlsVersion: 'TLS 1.2',
+    cipherSuite: 'TLS_RSA_WITH_AES_256_CBC_SHA',
+    keyExchange: 'Static RSA (No Forward Secrecy)',
+    posture: 'warning',
+    threatScore: 68,
+    alpn: 'http/1.1',
+    certificate: {
+      subject: 'CN=legacy-billing.vendor-connect.io, O=Vendor Connect',
+      issuer: 'GoDaddy Secure Certificate Authority - G2',
+      validity: 'Valid (Expires in 45 days)',
+      isExpired: false,
+      keyType: 'RSA 2048-bit',
+      sigAlg: 'SHA256withRSA',
+      status: 'valid',
+    },
+    vulnerabilities: [
+      'CBC mode padding oracle vulnerability risk (Lucky13 / POODLE-TLS)',
+      'Static RSA key exchange lacks forward secrecy',
+      'SHA-1 MAC used for message integrity',
+    ],
+    recommendation: 'Transition cipher suite to ECDHE-ECDSA-AES256-GCM-SHA384 or upgrade server endpoint to TLS 1.3.',
+    bytesTransferred: '312.4 KB',
+    durationMs: 198,
+  },
+  {
+    id: 'SESS-9150-DOH',
+    timestamp: '1h ago',
+    clientIp: '192.168.1.104:58210',
+    serverHost: 'dns.quad9.net',
+    serverIp: '9.9.9.9',
+    serverPort: 853,
+    sni: 'dns.quad9.net',
+    protocol: 'DoT / 853',
+    tlsVersion: 'TLS 1.3',
+    cipherSuite: 'TLS_AES_256_GCM_SHA384',
+    keyExchange: 'ECDH (x25519) - 253 bits',
+    posture: 'secure',
+    threatScore: 0,
+    alpn: 'dot',
+    certificate: {
+      subject: 'CN=dns.quad9.net, O=Quad9 Foundation',
+      issuer: 'DigiCert TLS RSA SHA256 2020 CA1',
+      validity: 'Valid (Expires in 184 days)',
+      isExpired: false,
+      keyType: 'RSA 2048-bit',
+      sigAlg: 'SHA256withRSA',
+      status: 'valid',
+    },
+    vulnerabilities: [],
+    recommendation: 'DNS-over-TLS query channel verified secure with pristine certificate verification.',
+    bytesTransferred: '48.2 KB',
+    durationMs: 32,
+  },
+  {
+    id: 'SESS-8920-C2',
+    timestamp: '1h 30m ago',
+    clientIp: '192.168.1.104:47102',
+    serverHost: 'update-svc-auth.dark-route.xyz',
+    serverIp: '185.220.101.99',
+    serverPort: 443,
+    sni: 'update-svc-auth.dark-route.xyz',
+    protocol: 'HTTPS / 443',
+    tlsVersion: 'SSL 3.0',
+    cipherSuite: 'TLS_RSA_WITH_DES_CBC_SHA',
+    keyExchange: 'Static RSA (No Forward Secrecy)',
+    posture: 'critical',
+    threatScore: 98,
+    alpn: 'none',
+    certificate: {
+      subject: 'CN=update-svc-auth.dark-route.xyz',
+      issuer: 'Untrusted Self-Signed Test CA',
+      validity: 'Self-Signed (Untrusted Root CA)',
+      isExpired: false,
+      keyType: 'RSA 512-bit (Extremely Weak)',
+      sigAlg: 'MD5withRSA',
+      status: 'self-signed',
+    },
+    vulnerabilities: [
+      'Critical: SSL 3.0 protocol used (POODLE vulnerable, RFC 7568 deprecated)',
+      'DES 56-bit encryption key — easily crackable within hours',
+      'MD5 signature algorithm is broken and susceptible to collision attacks',
+      'Untrusted self-signed certificate signature',
+    ],
+    recommendation: 'Isolate host endpoint immediately. Signature matches known Command & Control (C2) cryptographic profile.',
+    bytesTransferred: '18.4 KB',
+    durationMs: 512,
+  },
+];
+
 export function EmailsPage({ onNavigate }: EmailsPageProps) {
   const { currentUser } = useAuth();
-  const {
-    emails,
-    isLoading,
-    isSyncing,
-    lastSyncedAt,
-    selectedEmail,
-    stats,
-    filterState,
-    isGoogleConnected,
-    googleProfile,
-    disconnectGoogle,
-    setFilterState,
-    selectEmail,
-    syncNow,
-    connectGoogle,
-  } = useEmailIngestion();
-  const { tickets } = useTickets();
+  const { submitTicket } = useTickets();
 
-  const analyzedCaseIds = useMemo(
-    () => new Set(tickets.filter((t) => t.status === 'analyzed').map((t) => t.id)),
-    [tickets]
-  );
-  const analyzedEmailIds = useMemo(
-    () => new Set(tickets.filter((t) => t.status === 'analyzed' && t.emailId).map((t) => t.emailId!)),
-    [tickets]
-  );
+  const [sessions, setSessions] = useState<NetworkSession[]>(MOCK_SESSIONS);
+  const [filterPosture, setFilterPosture] = useState<'all' | 'critical' | 'secure' | 'tls13' | 'tls12'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSession, setSelectedSession] = useState<NetworkSession | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [escalatedMap, setEscalatedMap] = useState<Record<string, boolean>>({});
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 8;
-  const [syncNotice, setSyncNotice] = useState<string | null>(null);
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-
-  // Smooth sliding filter indicator pill
-  const filterRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [filterIndicatorStyle, setFilterIndicatorStyle] = useState<{
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-    opacity: number;
-  }>({ left: 0, top: 0, width: 0, height: 0, opacity: 0 });
-
-  useLayoutEffect(() => {
-    const updateIndicator = () => {
-      const currentEl = filterRefs.current[filterState.threatLevel];
-      if (currentEl) {
-        setFilterIndicatorStyle((prev) => {
-          if (
-            prev.left === currentEl.offsetLeft &&
-            prev.top === currentEl.offsetTop &&
-            prev.width === currentEl.offsetWidth &&
-            prev.height === currentEl.offsetHeight &&
-            prev.opacity === 1
-          ) {
-            return prev;
-          }
-          return {
-            left: currentEl.offsetLeft,
-            top: currentEl.offsetTop,
-            width: currentEl.offsetWidth,
-            height: currentEl.offsetHeight,
-            opacity: 1,
-          };
-        });
-      }
-    };
-    updateIndicator();
-    const rafId = requestAnimationFrame(updateIndicator);
-    window.addEventListener('resize', updateIndicator);
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', updateIndicator);
-    };
-  }, [filterState.threatLevel]);
-
-  const handleDisconnectGmail = () => {
-    disconnectGoogle();
-    if (currentUser?.email) {
-      UserNotificationService.addUserNotification(currentUser.email, {
-        id: `notif-gmail-disc-${Date.now()}`,
-        title: 'Gmail Disconnected',
-        msg: 'Gmail account disconnected from Sentinel-X monitoring.',
-        category: 'system',
-        sev: 'info',
-        route: 'emails',
-      });
-    }
-    setSyncNotice('Gmail account disconnected successfully.');
-    setTimeout(() => setSyncNotice(null), 4000);
-  };
-
-  const handleConnectGoogle = async () => {
-    if (!GoogleAuthService.isConfigured()) {
-      setIsGoogleModalOpen(true);
-      return;
-    }
-    try {
-      await connectGoogle();
-    } catch (err: any) {
-      console.error('Google connect error:', err);
-      setSyncNotice(err?.message || 'Google connection failed.');
-      setTimeout(() => setSyncNotice(null), 8000);
-    }
-  };
-
-  const handleGoogleModalSuccess = async () => {
-    setIsGoogleModalOpen(false);
-    try {
-      await connectGoogle();
-    } catch (err: any) {
-      console.error('Failed to sign in after setting client ID', err);
-      setSyncNotice(err?.message || 'Failed to authenticate with Google.');
-      setTimeout(() => setSyncNotice(null), 8000);
-    }
-  };
-
-  const handleManualSync = async () => {
-    setSyncNotice(null);
-    if (!isGoogleConnected) {
-      setSyncNotice('Please connect your Gmail account first to sync and view your emails.');
-      setTimeout(() => setSyncNotice(null), 6000);
-      handleConnectGoogle();
-      return;
-    }
-    try {
-      const count = await syncNow();
-      if (count > 0) {
-        setSyncNotice(`Successfully ingested and analyzed ${count} new incoming email(s) from Gmail!`);
-      } else {
-        setSyncNotice('Mailbox is up to date.');
-      }
-      setTimeout(() => setSyncNotice(null), 5000);
-    } catch (err: any) {
-      console.error('Manual sync error:', err);
-      setSyncNotice(`Sync notice: ${err?.message || 'Failed to sync with Gmail.'}`);
-      setTimeout(() => setSyncNotice(null), 8000);
-    }
-  };
-
-  // Filtered emails
-  const filteredEmails = useMemo(() => {
-    return emails.filter((item) => {
-      // If Google account is connected, strictly exclude any old seed/mock emails
-      if (isGoogleConnected && (item.id.startsWith('msg-seed-') || item.id.startsWith('msg-live-'))) {
-        return false;
-      }
-
-      // Threat level filter
-      if (filterState.threatLevel !== 'all') {
-        if (item.analysis?.threat_level !== filterState.threatLevel) {
-          return false;
-        }
+  // Filtered sessions
+  const filteredSessions = useMemo(() => {
+    return sessions.filter((s) => {
+      // Filter tab
+      if (filterPosture === 'critical') {
+        if (s.posture !== 'critical' && s.posture !== 'warning') return false;
+      } else if (filterPosture === 'secure') {
+        if (s.posture !== 'secure') return false;
+      } else if (filterPosture === 'tls13') {
+        if (s.tlsVersion !== 'TLS 1.3') return false;
+      } else if (filterPosture === 'tls12') {
+        if (s.tlsVersion !== 'TLS 1.2') return false;
       }
 
       // Search query
-      if (filterState.searchQuery.trim() !== '') {
-        const q = filterState.searchQuery.toLowerCase();
-        const matchSubject = item.subject.toLowerCase().includes(q);
-        const matchSender = item.sender.toLowerCase().includes(q) || (item.sender_name && item.sender_name.toLowerCase().includes(q));
-        const matchSnippet = item.snippet.toLowerCase().includes(q);
-        const matchSummary = item.analysis?.summary.toLowerCase().includes(q);
-        if (!matchSubject && !matchSender && !matchSnippet && !matchSummary) {
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase();
+        const matchHost = s.serverHost.toLowerCase().includes(q);
+        const matchIp = s.serverIp.toLowerCase().includes(q) || s.clientIp.toLowerCase().includes(q);
+        const matchCipher = s.cipherSuite.toLowerCase().includes(q);
+        const matchTls = s.tlsVersion.toLowerCase().includes(q);
+        const matchSni = s.sni.toLowerCase().includes(q);
+        if (!matchHost && !matchIp && !matchCipher && !matchTls && !matchSni) {
           return false;
         }
       }
-
       return true;
     });
-  }, [emails, filterState]);
+  }, [sessions, filterPosture, searchQuery]);
 
-  // Pagination calculation
-  const totalPages = Math.ceil(filteredEmails.length / itemsPerPage) || 1;
-  const paginatedEmails = useMemo(() => {
+  const totalPages = Math.ceil(filteredSessions.length / itemsPerPage) || 1;
+  const paginatedSessions = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return filteredEmails.slice(start, start + itemsPerPage);
-  }, [filteredEmails, currentPage, itemsPerPage]);
+    return filteredSessions.slice(start, start + itemsPerPage);
+  }, [filteredSessions, currentPage, itemsPerPage]);
 
-  const renderRiskBadge = (level?: ThreatLevel, score?: number) => {
-    const baseClasses = "w-[136px] h-7 inline-flex items-center justify-center gap-1.5 px-3 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all";
-    if (level === 'malicious') {
+  const stats = useMemo(() => {
+    const total = sessions.length;
+    const tls13Count = sessions.filter((s) => s.tlsVersion === 'TLS 1.3').length;
+    const weakCiphers = sessions.filter((s) => s.posture === 'warning' || s.posture === 'critical').length;
+    const criticalThreats = sessions.filter((s) => s.posture === 'critical').length;
+    return { total, tls13Count, weakCiphers, criticalThreats };
+  }, [sessions]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setStatusMessage('Refreshing network packet telemetry streams...');
+    setTimeout(() => {
+      setIsRefreshing(false);
+      setStatusMessage('Telemetry updated: 8 live TLS sessions synchronized.');
+      setTimeout(() => setStatusMessage(null), 4000);
+    }, 900);
+  };
+
+  const handleEscalateToSoc = async (session: NetworkSession) => {
+    try {
+      await submitTicket({
+        userEmail: currentUser?.email || 'user@company.com',
+        userComment: `Cryptographic Vulnerability Alert: ${session.serverHost} (${session.cipherSuite})\nHost: ${session.serverHost} (${session.serverIp})\nProtocol: ${session.protocol} | ${session.tlsVersion}\nCipher: ${session.cipherSuite}\nIdentified Flaws: ${session.vulnerabilities.join('; ')}\nRecommendation: ${session.recommendation}`,
+        emlFile: null,
+        emailId: session.id,
+        priority: session.posture === 'critical' ? 'critical' : 'high',
+        threatCategory: 'Weak Cipher / Downgrade Attack',
+      });
+
+      setEscalatedMap((prev) => ({ ...prev, [session.id]: true }));
+      setStatusMessage(`Session ${session.id} successfully escalated to SOC Analysts for PCAP review!`);
+      setTimeout(() => setStatusMessage(null), 5000);
+    } catch (e) {
+      console.error(e);
+      setStatusMessage('Failed to escalate session.');
+    }
+  };
+
+  const renderPostureBadge = (posture: SessionPosture, score: number) => {
+    if (posture === 'critical') {
       return (
-        <span className={`${baseClasses} bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/30`}>
-          <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-red-600 dark:text-red-400" />
-          <span>Malicious ({score ?? 90})</span>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30">
+          <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+          <span>Critical Risk ({score})</span>
         </span>
       );
     }
-    if (level === 'suspicious') {
+    if (posture === 'warning') {
       return (
-        <span className={`${baseClasses} bg-amber-50 dark:bg-amber-500/15 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30`}>
-          <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <span>Suspicious ({score ?? 50})</span>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          <span>Vulnerable ({score})</span>
         </span>
       );
     }
     return (
-      <span className={`${baseClasses} bg-emerald-50 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30`}>
-        <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-        <span>Clean ({score ?? 0})</span>
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+        <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+        <span>Secure ({score})</span>
       </span>
     );
   };
 
+  const renderTlsBadge = (tls: TlsVersion) => {
+    switch (tls) {
+      case 'TLS 1.3':
+        return (
+          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+            TLS 1.3 (Modern)
+          </span>
+        );
+      case 'TLS 1.2':
+        return (
+          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30">
+            TLS 1.2 (Standard)
+          </span>
+        );
+      case 'TLS 1.0':
+        return (
+          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+            TLS 1.0 (Deprecated)
+          </span>
+        );
+      case 'SSL 3.0':
+        return (
+          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase bg-red-500/25 text-red-600 dark:text-red-400 border border-red-500/40">
+            SSL 3.0 (Broken)
+          </span>
+        );
+    }
+  };
+
   return (
     <div className="space-y-6 text-slate-900 dark:text-white pb-16">
-      {/* ── Header Card (Responsive Desktop + Mobile) ── */}
+      {/* ── Top Header Banner ── */}
       <SlideIn delay={0} direction="down">
-        {/* ── Desktop Card (PC only: md:flex) Matching Screenshot ── */}
-        <div className="hidden md:flex items-center justify-between gap-4 p-4 lg:p-5 rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 relative overflow-hidden shadow-sm dark:shadow-2xl">
-          {/* Left: Icon + Title & Badges + Connected Account */}
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/10">
-              <Mail className="w-5 h-5 text-cyan-400" />
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 lg:p-6 rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl relative overflow-hidden">
+          <div className="flex items-start sm:items-center gap-4 min-w-0">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-500/20 via-violet-500/20 to-blue-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0 shadow-inner">
+              <Lock className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
             </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                  Cryptographic Network Sessions
+                </h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Live DPI Engine (eth0)
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+                  <Sparkles className="w-3 h-3" />
+                  Zero Plaintext Enforced
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                Continuous TLS handshake telemetry, cipher suite strength auditing & encrypted stream classification.
+              </p>
+            </div>
+          </div>
 
-          <div className="min-w-0 space-y-1">
-            {/* Title + Badges */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Automated Email Ingestion &amp; Analysis
-              </h1>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-500/30 shrink-0">
-                Live Gemini Triage
-              </span>
-              {isGoogleConnected ? (
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 flex items-center gap-1.5 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 animate-pulse" />
-                  Gmail Live
-                </span>
-              ) : (
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-cyan-100 dark:bg-cyan-500/15 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30 flex items-center gap-1.5 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 dark:bg-cyan-400 animate-pulse" />
-                  Mailbox Live
-                </span>
-              )}
-            </div>
+          {/* Action buttons */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+              title="Refresh session telemetry"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-cyan-500' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
 
-            {/* Subtitle & Connected Account Details */}
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-gray-400 flex-wrap">
-              <span className="text-slate-400 dark:text-gray-500">Connected account</span>
-              {isGoogleConnected ? (
-                <span className="relative group inline-flex items-center gap-1.5 pl-2.5 pr-1 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 dark:bg-white/[0.04] dark:hover:bg-white/[0.07] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 font-mono text-xs transition-all">
-                  {googleProfile?.picture ? (
-                    <img src={googleProfile.picture} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />
-                  ) : (
-                    <span className="w-2 h-2 rounded-full bg-blue-500" />
-                  )}
-                  <span>{googleProfile?.email || currentUser?.email}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDisconnectGmail();
-                    }}
-                    title="Disconnect Gmail (Unlink)"
-                    aria-label="Disconnect Gmail"
-                    className="p-0.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 transition-all cursor-pointer flex items-center justify-center group/unlink"
-                  >
-                    <Link2Off className="w-3 h-3 group-hover/unlink:scale-110 transition-transform" />
-                  </button>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 font-mono text-xs">
-                  <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400" />
-                  {currentUser?.email || 'user@company.corp'}
-                </span>
-              )}
-              <span className="text-slate-300 dark:text-gray-600">|</span>
-              <span className="text-slate-500 dark:text-gray-500 text-xs">
-                Real-time Gemini security scoring &amp; phishing detection
-              </span>
-            </div>
+            <button
+              onClick={() => onNavigate('check-status')}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95"
+            >
+              <ClipboardList className="w-4 h-4 text-violet-500" />
+              <span>Check Status</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('submit-report')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-md shadow-cyan-500/20 transition-all cursor-pointer active:scale-95"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Submit PCAP</span>
+            </button>
           </div>
         </div>
+      </SlideIn>
 
-        {/* Right: Telemetry status + Action buttons */}
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="text-right space-y-0.5">
-            <div className={`text-xs font-medium flex items-center gap-1.5 justify-end ${isGoogleConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-gray-400'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isGoogleConnected ? 'bg-emerald-500 dark:bg-emerald-400 animate-pulse' : 'bg-slate-400 dark:bg-gray-500'}`} />
-              <span>{isGoogleConnected ? 'Live Gmail · auto-sync 30s' : 'Gmail Not Connected'}</span>
-            </div>
-            <div className="text-[11px] text-slate-400 dark:text-gray-500 font-mono">
-              {isGoogleConnected && lastSyncedAt ? `Last synced ${new Date(lastSyncedAt).toLocaleTimeString()}` : 'Connect account to sync'}
-            </div>
+      {/* Notification Toast */}
+      {statusMessage && (
+        <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 text-xs font-medium flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-cyan-500 animate-pulse shrink-0" />
+            <span>{statusMessage}</span>
           </div>
-
-          {!isGoogleConnected && (
-            <button
-              onClick={handleConnectGoogle}
-              className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 dark:bg-white/[0.06] dark:hover:bg-white/10 dark:border-white/15 dark:text-white text-xs font-semibold flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
-            >
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-              </svg>
-              <span>Connect Gmail</span>
-            </button>
-          )}
-
-          <button
-            onClick={handleManualSync}
-            disabled={isSyncing}
-            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-blue-600/30 transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{isSyncing ? 'Syncing...' : isGoogleConnected ? 'Sync Gmail' : 'Sync Now'}</span>
+          <button onClick={() => setStatusMessage(null)} className="p-1 hover:bg-cyan-500/20 rounded-md">
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
-      </div>
+      )}
 
-      {/* ── Mobile Card (Phone only: block md:hidden) ── */}
-      <div className="block md:hidden rounded-2xl p-4 bg-white dark:bg-[#11121b] border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-xl space-y-3.5">
-        {/* Row 1: Icon + Title + Subtitle */}
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/10 mt-0.5">
-            <Mail className="w-5 h-5" />
+      {/* ── KPI Metrics Grid ── */}
+      <SlideIn delay={100} direction="up">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+          {/* Card 1 */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Monitored Sessions
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-blue-500" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+              {stats.total.toLocaleString()}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Active TCP / TLS streams
+            </p>
           </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-white leading-snug">
-              Automated email ingestion
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">
-              AI-powered inbox monitoring and triage
+
+          {/* Card 2 */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                TLS 1.3 Active
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+              {stats.tls13Count}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Modern Forward Secrecy (PFS)
+            </p>
+          </div>
+
+          {/* Card 3 */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Weak / Legacy Ciphers
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
+              {stats.weakCiphers}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              CBC, 3DES, or static RSA detected
+            </p>
+          </div>
+
+          {/* Card 4 */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Critical Threats
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                <ShieldAlert className="w-4 h-4 text-red-500" />
+              </div>
+            </div>
+            <div className="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400">
+              {stats.criticalThreats}
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Expired certs & downgrade attacks
             </p>
           </div>
         </div>
-
-        {/* Row 2: Badges (Gemini triage, Gmail live) */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-500/15 border border-purple-300 dark:border-purple-500/30 text-purple-800 dark:text-purple-300 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-purple-700 dark:text-purple-400" />
-            <span>Gemini triage</span>
-          </span>
-          {isGoogleConnected ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 animate-pulse" />
-              <span>Gmail live</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-100 dark:bg-cyan-500/15 border border-cyan-300 dark:border-cyan-500/30 text-cyan-800 dark:text-cyan-300 text-xs font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 dark:bg-cyan-400 animate-pulse" />
-              <span>Mailbox live</span>
-            </span>
-          )}
-        </div>
-
-        {/* Row 3: Connected account section */}
-        <div className="space-y-1.5">
-          <div className="text-xs text-slate-500 dark:text-gray-400 font-medium">
-            Connected account
-          </div>
-          {isGoogleConnected ? (
-            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                {googleProfile?.picture ? (
-                  <img src={googleProfile.picture} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 text-[11px] font-bold flex items-center justify-center shrink-0">
-                    {(googleProfile?.email || currentUser?.email || 'MK').slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <span className="text-xs font-medium text-slate-900 dark:text-white truncate">
-                  {googleProfile?.email || currentUser?.email}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                  <Check className="w-3 h-3" />
-                  <span>LIVE</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={handleDisconnectGmail}
-                  title="Disconnect Gmail (Unlink)"
-                  aria-label="Disconnect Gmail"
-                  className="px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-95"
-                >
-                  <Link2Off className="w-3 h-3" />
-                  <span>Unlink</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-gray-500/20 text-slate-700 dark:text-gray-300 border border-slate-300 dark:border-white/10 text-[11px] font-bold flex items-center justify-center shrink-0">
-                  {(currentUser?.displayName || currentUser?.email || 'US').slice(0, 2).toUpperCase()}
-                </div>
-                <span className="text-xs font-medium text-slate-900 dark:text-white truncate">
-                  {currentUser?.email || 'user@company.corp'}
-                </span>
-              </div>
-              <button
-                onClick={handleConnectGoogle}
-                className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 border border-slate-200 dark:border-white/15 text-cyan-700 dark:text-cyan-300 hover:text-cyan-800 dark:hover:text-cyan-200 text-xs font-medium flex items-center gap-1.5 shrink-0 transition-all cursor-pointer"
-              >
-                <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                <span>Connect Gmail</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Row 4: Subtle divider line */}
-        <div className="border-t border-slate-200 dark:border-white/10 pt-3">
-          {/* Row 5: Status indicator + Last synced */}
-          <div className="flex items-start justify-between text-xs font-mono">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full shrink-0 ${isGoogleConnected ? 'bg-emerald-500 dark:bg-emerald-400 animate-pulse' : 'bg-slate-400 dark:bg-gray-500'}`} />
-                <span className={`font-medium ${isGoogleConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-gray-400'}`}>
-                  {isGoogleConnected ? 'Live Gmail' : 'Gmail Not Connected'}
-                </span>
-              </div>
-              <div className="text-[11px] text-slate-400 dark:text-gray-400 pl-3.5">
-                {isGoogleConnected ? 'auto-sync 30s' : 'Auto-sync disabled'}
-              </div>
-            </div>
-            <div className="text-right space-y-0.5">
-              <div className="text-[11px] text-slate-400 dark:text-gray-400">
-                {isGoogleConnected && lastSyncedAt ? 'Last synced' : 'Status'}
-              </div>
-              <div className="text-xs text-slate-900 dark:text-white font-mono">
-                {isGoogleConnected && lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString() : 'Not connected'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Row 6: Full-width sync action button */}
-        <button
-          onClick={handleManualSync}
-          disabled={isSyncing}
-          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs font-semibold shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2 transition-colors active:scale-95 disabled:opacity-60 cursor-pointer overflow-hidden select-none"
-        >
-          {isSyncing ? (
-            <>
-              <RefreshCw className="w-4 h-4 shrink-0 animate-spin" />
-              <span className="whitespace-nowrap">Syncing...</span>
-            </>
-          ) : (
-            <>
-              <RefreshCw className="w-4 h-4 shrink-0" />
-              <span className="whitespace-nowrap">{isGoogleConnected ? 'Sync Gmail' : 'Sync Now'}</span>
-            </>
-          )}
-        </button>
-      </div>
       </SlideIn>
 
-      {/* Google Session Expired Notification Banner */}
-      {!isGoogleConnected && GoogleAuthService.isTokenExpired() && (
-        <SlideIn delay={40} direction="down">
-          <div className="p-3.5 rounded-xl border bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30 text-xs text-amber-900 dark:text-amber-200 flex items-center justify-between gap-3 animate-slide-down shadow-sm dark:shadow-none">
-            <div className="flex items-center gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>
-                Your Gmail session has expired. Click <strong className="font-bold text-amber-950 dark:text-amber-100">Connect Gmail</strong> to re-authenticate and resume automated inbox threat monitoring.
-              </span>
-            </div>
-            <button
-              onClick={handleConnectGoogle}
-              className="px-3 py-1.5 rounded-lg bg-amber-200/80 hover:bg-amber-300/80 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 border border-amber-400 dark:border-amber-500/40 text-amber-950 dark:text-amber-200 text-xs font-bold shrink-0 transition-all cursor-pointer shadow-sm"
-            >
-              Re-authenticate
-            </button>
-          </div>
-        </SlideIn>
-      )}
-
-      {/* Sync Notification Banner */}
-      {syncNotice && (
-        <SlideIn delay={50} direction="down">
-          {(() => {
-            const isError =
-              syncNotice.toLowerCase().includes('mismatch') ||
-              syncNotice.toLowerCase().includes('failed') ||
-              syncNotice.toLowerCase().includes('error');
-            const isCancelled =
-              syncNotice.toLowerCase().includes('closed') ||
-              syncNotice.toLowerCase().includes('cancel');
-            const isSuccess =
-              syncNotice.toLowerCase().includes('success') ||
-              syncNotice.toLowerCase().includes('ingested');
-
-            const containerClasses = isError
-              ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-500/40 text-rose-950 dark:text-rose-200'
-              : isCancelled
-              ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-500/40 text-amber-950 dark:text-amber-200'
-              : isSuccess
-              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-500/40 text-emerald-950 dark:text-emerald-200'
-              : 'bg-cyan-50 dark:bg-cyan-950/40 border-cyan-300 dark:border-cyan-500/40 text-slate-900 dark:text-cyan-100';
-
-            const iconClasses = isError
-              ? 'text-rose-600 dark:text-rose-400'
-              : isCancelled
-              ? 'text-amber-600 dark:text-amber-400'
-              : isSuccess
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : 'text-cyan-600 dark:text-cyan-400';
-
-            const textClasses = isError
-              ? 'text-rose-950 dark:text-rose-100'
-              : isCancelled
-              ? 'text-amber-950 dark:text-amber-100'
-              : isSuccess
-              ? 'text-emerald-950 dark:text-emerald-100'
-              : 'text-slate-900 dark:text-cyan-100';
-
-            return (
-              <div
-                className={`p-3.5 rounded-xl border text-xs flex items-center justify-between gap-3 animate-slide-down shadow-sm dark:shadow-none ${containerClasses}`}
-              >
-                <div className="flex items-center gap-2.5">
-                  {isError || isCancelled ? (
-                    <AlertTriangle className={`w-4 h-4 shrink-0 ${iconClasses}`} />
-                  ) : isSuccess ? (
-                    <ShieldCheck className={`w-4 h-4 shrink-0 ${iconClasses}`} />
-                  ) : (
-                    <Sparkles className={`w-4 h-4 shrink-0 ${iconClasses}`} />
-                  )}
-                  <span className={`font-bold leading-relaxed ${textClasses}`}>
-                    {syncNotice}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSyncNotice(null)}
-                  className="text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white shrink-0 p-1.5 rounded-lg hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors font-bold cursor-pointer text-sm"
-                  title="Dismiss"
-                >
-                  ✕
-                </button>
-              </div>
-            );
-          })()}
-        </SlideIn>
-      )}
-
-      {/* Stat Metric Cards */}
-      <SlideIn delay={80} direction="up">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
-          {[
-            {
-              label: 'Total Scanned',
-              value: stats.total,
-              subtitle: 'Inbox messages monitored',
-              dotColor: 'bg-[#38bdf8]',
-              numColor: 'text-sky-700 dark:text-[#38bdf8]',
-              filter: 'all' as const,
-            },
-            {
-              label: 'Clean & Authentic',
-              value: stats.clean,
-              subtitle: 'Verified safe communications',
-              dotColor: 'bg-[#4ade80]',
-              numColor: 'text-emerald-700 dark:text-[#4ade80]',
-              filter: 'clean' as const,
-            },
-            {
-              label: 'Suspicious Anomalies',
-              value: stats.suspicious,
-              subtitle: 'Require user caution',
-              dotColor: 'bg-[#fbbf24]',
-              numColor: 'text-amber-700 dark:text-[#fbbf24]',
-              filter: 'suspicious' as const,
-            },
-            {
-              label: 'Malicious Threats',
-              value: stats.malicious,
-              subtitle: 'Phishing & fraud intercepted',
-              dotColor: 'bg-[#f87171]',
-              numColor: 'text-red-700 dark:text-[#f87171]',
-              filter: 'malicious' as const,
-            },
-          ].map((stat) => {
-            return (
-              <div
-                key={stat.label}
-                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#0c0e18] border border-slate-200 dark:border-white/[0.08] transition-all flex flex-col justify-between min-h-[92px] sm:min-h-[102px] shadow-none"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
-                    {stat.label}
-                  </span>
-                  <span className={`w-2 h-2 rounded-full ${stat.dotColor}`} />
-                </div>
-                <div>
-                  <div className={`text-2xl sm:text-3xl font-bold font-mono tracking-tight ${stat.numColor}`}>
-                    {stat.value}
-                  </div>
-                  <div className="text-[10px] sm:text-[11px] text-slate-400 dark:text-gray-500 font-mono mt-0.5 truncate">
-                    {stat.subtitle}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </SlideIn>
-
-      {/* Filters and Search Bar */}
-      <SlideIn delay={120} direction="up">
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#11121b] border border-slate-200 dark:border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 shadow-sm">
-          {/* Search input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-gray-400" />
+      {/* ── Search & Filter Bar ── */}
+      <SlideIn delay={150} direction="up">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Search box */}
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              value={filterState.searchQuery}
+              value={searchQuery}
               onChange={(e) => {
-                setFilterState((prev) => ({ ...prev, searchQuery: e.target.value }));
+                setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Search by sender, subject, or AI summary..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors"
+              placeholder="Search by Hostname, IP, SNI, Cipher Suite, or TLS version..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:border-cyan-500 dark:focus:border-cyan-400 text-slate-900 dark:text-white placeholder-slate-400 transition-all"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          {/* Filter pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto overflow-y-hidden scrollbar-none touch-scroll touch-pan-x overscroll-x-contain pb-1 md:pb-0">
-            <span className="text-xs text-slate-500 dark:text-gray-400 mr-1 flex items-center gap-1 shrink-0 font-medium">
-              <Filter className="w-3.5 h-3.5" />
-              Filter:
-            </span>
-            <div className="relative isolate flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/5 select-none">
-              {/* Smooth sliding indicator pill */}
-              <div
-                className={`absolute pointer-events-none rounded-xl border transition-all duration-300 ease-out shadow-sm ${
-                  filterState.threatLevel === 'malicious'
-                    ? 'bg-red-500/15 dark:bg-red-500/20 border-red-400/60 dark:border-red-500/40 shadow-red-900/10'
-                    : filterState.threatLevel === 'suspicious'
-                      ? 'bg-amber-500/15 dark:bg-amber-500/20 border-amber-400/60 dark:border-amber-500/40 shadow-amber-900/10'
-                      : filterState.threatLevel === 'clean'
-                        ? 'bg-emerald-500/15 dark:bg-emerald-500/20 border-emerald-400/60 dark:border-emerald-500/40 shadow-emerald-900/10'
-                        : 'bg-cyan-500/15 dark:bg-cyan-500/20 border-cyan-400/60 dark:border-cyan-500/40 shadow-cyan-900/10'
-                }`}
-                style={{
-                  top: 0,
-                  left: 0,
-                  transform: `translate3d(${filterIndicatorStyle.left}px, ${filterIndicatorStyle.top}px, 0)`,
-                  width: filterIndicatorStyle.width,
-                  height: filterIndicatorStyle.height,
-                  opacity: filterIndicatorStyle.opacity,
-                  transition: 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), height 300ms cubic-bezier(0.25, 1, 0.5, 1), opacity 150ms ease',
-                  zIndex: 0,
-                }}
-              />
-              {[
-                { id: 'all' as const, label: 'All Emails', icon: Inbox },
-                { id: 'malicious' as const, label: 'Malicious', icon: ShieldAlert },
-                { id: 'suspicious' as const, label: 'Suspicious', icon: AlertTriangle },
-                { id: 'clean' as const, label: 'Clean', icon: ShieldCheck },
-              ].map((tab) => {
-                const Icon = tab.icon;
-                const isActive = filterState.threatLevel === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    ref={(el) => {
-                      filterRefs.current[tab.id] = el;
-                      if (tab.id === filterState.threatLevel && el && filterIndicatorStyle.opacity === 0) {
-                        setFilterIndicatorStyle({
-                          left: el.offsetLeft,
-                          top: el.offsetTop,
-                          width: el.offsetWidth,
-                          height: el.offsetHeight,
-                          opacity: 1,
-                        });
-                      }
-                    }}
-                    onClick={() => {
-                      setFilterState((prev) => ({ ...prev, threatLevel: tab.id }));
-                      setCurrentPage(1);
-                    }}
-                    style={{ zIndex: 10 }}
-                    className={`relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors duration-200 cursor-pointer shrink-0 ${
-                      isActive
-                        ? tab.id === 'malicious'
-                          ? 'text-red-950 dark:text-red-200 font-bold'
-                          : tab.id === 'suspicious'
-                            ? 'text-amber-950 dark:text-amber-200 font-bold'
-                            : tab.id === 'clean'
-                              ? 'text-emerald-950 dark:text-emerald-200 font-bold'
-                              : 'text-cyan-950 dark:text-cyan-200 font-bold'
-                        : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Icon
-                      className={`w-3.5 h-3.5 shrink-0 ${
-                        isActive
-                          ? tab.id === 'malicious'
-                            ? 'text-red-700 dark:text-red-300'
-                            : tab.id === 'suspicious'
-                              ? 'text-amber-700 dark:text-amber-300'
-                              : tab.id === 'clean'
-                                ? 'text-emerald-700 dark:text-emerald-300'
-                                : 'text-cyan-700 dark:text-cyan-300'
-                          : 'text-slate-500 dark:text-gray-400'
-                      }`}
-                    />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+            <button
+              onClick={() => {
+                setFilterPosture('all');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                filterPosture === 'all'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+              }`}
+            >
+              All ({sessions.length})
+            </button>
+            <button
+              onClick={() => {
+                setFilterPosture('critical');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                filterPosture === 'critical'
+                  ? 'bg-red-500 text-white shadow-sm shadow-red-500/20'
+                  : 'text-red-600 dark:text-red-400 hover:bg-red-500/10'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              Vulnerable ({stats.weakCiphers})
+            </button>
+            <button
+              onClick={() => {
+                setFilterPosture('tls13');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                filterPosture === 'tls13'
+                  ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
+                  : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              TLS 1.3 Modern ({stats.tls13Count})
+            </button>
+            <button
+              onClick={() => {
+                setFilterPosture('tls12');
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                filterPosture === 'tls12'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                  : 'text-blue-600 dark:text-blue-400 hover:bg-blue-500/10'
+              }`}
+            >
+              TLS 1.2
+            </button>
           </div>
         </div>
       </SlideIn>
 
-      {/* Main Paginated Emails: Mobile Cards + Desktop Table */}
-      <SlideIn delay={160} direction="up">
-        <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#11121b] overflow-hidden shadow-sm dark:shadow-xl">
-        {/* ── Mobile Card View (md:hidden) ── */}
-        <div className="block md:hidden divide-y divide-slate-100 dark:divide-white/5">
-          {isLoading ? (
-            <div className="py-12 text-center text-gray-400">
-              <div className="flex flex-col items-center justify-center gap-3">
-                <RefreshCw className="w-6 h-6 animate-spin text-cyan-400" />
-                <span className="text-xs">Ingesting email feed and running Gemini security triage...</span>
-              </div>
-            </div>
-          ) : paginatedEmails.length === 0 ? (
-            <div className="py-12 px-4 text-center">
-              {!isGoogleConnected ? (
-                <div className="flex flex-col items-center justify-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-                    <Mail className="w-7 h-7 text-cyan-400" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Connect Gmail to get started</p>
-                    <p className="text-xs text-slate-500 dark:text-gray-400">Link your Gmail account to monitor, scan and triage your inbox in real time.</p>
-                  </div>
-                  <button
-                    onClick={handleConnectGoogle}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-lg shadow-cyan-900/30"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                    Connect Gmail
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-gray-400">
-                  <Inbox className="w-8 h-8 text-slate-400 dark:text-gray-500" />
-                  <span className="text-xs">No live Gmail messages loaded yet. Tap "Sync Now" above to fetch your inbox.</span>
-                </div>
-              )}
+      {/* ── Sessions List ── */}
+      <SlideIn delay={200} direction="up">
+        <div className="space-y-3">
+          {paginatedSessions.length === 0 ? (
+            <div className="p-12 text-center rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10">
+              <Server className="w-12 h-12 mx-auto text-slate-400 mb-3 opacity-50" />
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">No cryptographic sessions found</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                No active encrypted traffic streams match your current search and posture filters.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilterPosture('all');
+                }}
+                className="mt-4 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 transition-all"
+              >
+                Clear all filters
+              </button>
             </div>
           ) : (
-            paginatedEmails.map((email) => {
-              const level = email.analysis?.threat_level || 'clean';
-              const rawScore = email.analysis?.threat_score;
-              const displayScore = (rawScore === 5 || rawScore === undefined) && level === 'clean'
-                ? generateRealisticCleanScore(`${email.id}:${email.sender}:${email.subject}`)
-                : (rawScore ?? 5);
-              const isRevertedBack =
-                email.analysis?.escalation_completed ||
-                (email.analysis?.soc_case_id && analyzedCaseIds.has(email.analysis.soc_case_id)) ||
-                analyzedEmailIds.has(email.id);
-              const showSocEscalated = email.analysis?.escalated_to_soc && !isRevertedBack;
-
-              return (
-                <div
-                  key={email.id}
-                  onClick={() => selectEmail(email)}
-                  className="p-3.5 hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-white/[0.04] dark:active:bg-white/[0.08] transition-colors cursor-pointer space-y-2.5"
-                >
-                  {/* Row 1: Status badge + Date */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {renderRiskBadge(level, displayScore)}
-                      {showSocEscalated && (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/30 text-[10.5px] text-purple-700 dark:text-purple-300 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-purple-500 dark:bg-purple-400 animate-pulse shrink-0" />
-                          <span>SOC Escalated</span>
-                        </span>
+            paginatedSessions.map((session) => (
+              <div
+                key={session.id}
+                className="group p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 dark:hover:border-cyan-500/40 shadow-sm transition-all duration-200 relative overflow-hidden"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  {/* Left: Icon + Host info + Cipher Suite */}
+                  <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                    <div
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${
+                        session.posture === 'critical'
+                          ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                          : session.posture === 'warning'
+                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+                          : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+                      }`}
+                    >
+                      {session.posture === 'critical' ? (
+                        <ShieldAlert className="w-5 h-5" />
+                      ) : session.posture === 'warning' ? (
+                        <AlertTriangle className="w-5 h-5" />
+                      ) : (
+                        <Lock className="w-5 h-5" />
                       )}
                     </div>
-                    <span className="text-[11px] text-slate-400 dark:text-gray-400 shrink-0 font-mono">
-                      {new Date(email.received_at).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
 
-                  {/* Row 2: Sender */}
-                  <div>
-                    <div className="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm truncate">
-                      {decodeMimeHeader(email.sender_name || email.sender)}
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-gray-400 truncate">
-                      {email.sender}
-                    </div>
-                  </div>
-
-                  {/* Row 3: Subject & Snippet */}
-                  <div className="space-y-0.5">
-                    <div className="font-medium text-slate-800 dark:text-gray-200 text-xs line-clamp-1">
-                      {decodeMimeHeader(email.subject)}
-                    </div>
-                    {email.snippet && (
-                      <div className="text-[11px] text-slate-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                        {decodeMimeHeader(email.snippet)}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="font-mono text-xs font-bold text-cyan-600 dark:text-cyan-400">
+                          {session.id}
+                        </span>
+                        {renderTlsBadge(session.tlsVersion)}
+                        {renderPostureBadge(session.posture, session.threatScore)}
+                        <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
+                          {session.timestamp}
+                        </span>
                       </div>
-                    )}
+
+                      <div className="flex flex-wrap items-baseline gap-2">
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">
+                          {session.serverHost}
+                        </h3>
+                        <span className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                          {session.serverIp}:{session.serverPort}
+                        </span>
+                      </div>
+
+                      {/* Cipher details line */}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-600 dark:text-slate-400">
+                        <div className="flex items-center gap-1.5">
+                          <Key className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="font-mono font-medium text-slate-800 dark:text-slate-200 truncate max-w-xs sm:max-w-md">
+                            {session.cipherSuite}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Globe className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>ALPN: <strong className="font-mono text-slate-700 dark:text-slate-300">{session.alpn}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <FileCode className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{session.bytesTransferred}</span>
+                        </div>
+                      </div>
+
+                      {/* Vulnerability tags if any */}
+                      {session.vulnerabilities.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2.5">
+                          {session.vulnerabilities.map((v, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20"
+                            >
+                              {v}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Row 4: Action */}
-                  <div className="flex items-center justify-end pt-0.5">
-                    <span className="inline-flex items-center gap-1 text-[11px] text-cyan-400 font-medium">
+                  {/* Right Actions */}
+                  <div className="flex items-center gap-2 self-end lg:self-center shrink-0">
+                    {/* Escalate button for vulnerable sessions */}
+                    {(session.posture === 'critical' || session.posture === 'warning') && (
+                      <button
+                        onClick={() => handleEscalateToSoc(session)}
+                        disabled={escalatedMap[session.id]}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
+                          escalatedMap[session.id]
+                            ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30 cursor-default'
+                            : 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 border border-red-500/30'
+                        }`}
+                      >
+                        {escalatedMap[session.id] ? '✓ Escalated' : 'Escalate to SOC'}
+                      </button>
+                    )}
+
+                    {/* Inspect Handshake Modal button */}
+                    <button
+                      onClick={() => setSelectedSession(session)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-white/10 hover:bg-cyan-500/15 hover:text-cyan-600 dark:hover:text-cyan-400 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95"
+                    >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>Inspect Details &amp; Forensics →</span>
-                    </span>
+                      <span>Inspect Handshake</span>
+                    </button>
+
+                    {/* Deep Forensics Route */}
+                    <button
+                      onClick={() => onNavigate(`emails/${encodeURIComponent(session.id)}/forensics`)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all cursor-pointer"
+                      title="Launch full deep forensics workspace"
+                    >
+                      <span>Deep Forensics</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-              );
-            })
+              </div>
+            ))
           )}
         </div>
+      </SlideIn>
 
-        {/* ── Desktop Data Table (hidden md:block) ── */}
-        <div className="hidden md:block overflow-x-auto scrollbar-thin touch-scroll">
-          <table className="w-full text-left text-xs min-w-[640px] md:min-w-0">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] text-slate-500 dark:text-gray-400 uppercase tracking-wider text-[11px]">
-                <th className="py-3.5 px-4 w-44 whitespace-nowrap">Status / Risk</th>
-                <th className="py-3.5 px-4 w-60">Sender</th>
-                <th className="py-3.5 px-4">Subject</th>
-                <th className="py-3.5 px-4 w-36">Received</th>
-                <th className="py-3.5 px-4 w-28 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-500 dark:text-gray-400">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <RefreshCw className="w-6 h-6 animate-spin text-cyan-500 dark:text-cyan-400" />
-                      <span>Ingesting email feed and running Gemini security triage...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : paginatedEmails.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-16 text-center">
-                    {!isGoogleConnected ? (
-                      <div className="flex flex-col items-center justify-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-                          <Mail className="w-7 h-7 text-cyan-500 dark:text-cyan-400" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white">Connect Gmail to get started</p>
-                          <p className="text-xs text-slate-500 dark:text-gray-400">Link your Gmail account to monitor, scan and triage your inbox in real time.</p>
-                        </div>
-                        <button
-                          onClick={handleConnectGoogle}
-                          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors shadow-lg shadow-cyan-900/30"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                          Connect Gmail
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-gray-400">
-                        <Inbox className="w-8 h-8 text-slate-400 dark:text-gray-500" />
-                        <span>No live Gmail messages loaded yet. Click "Sync Gmail" above to fetch and triage your real inbox.</span>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ) : (
-                paginatedEmails.map((email) => {
-                  const level = email.analysis?.threat_level || 'clean';
-                  const rawScore = email.analysis?.threat_score;
-                  const displayScore = (rawScore === 5 || rawScore === undefined) && level === 'clean'
-                    ? generateRealisticCleanScore(`${email.id}:${email.sender}:${email.subject}`)
-                    : (rawScore ?? 5);
-                  const isRevertedBack =
-                    email.analysis?.escalation_completed ||
-                    (email.analysis?.soc_case_id && analyzedCaseIds.has(email.analysis.soc_case_id)) ||
-                    analyzedEmailIds.has(email.id);
-                  const showSocEscalated = email.analysis?.escalated_to_soc && !isRevertedBack;
-
-                  return (
-                    <tr
-                      key={email.id}
-                      onClick={() => selectEmail(email)}
-                      className="hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors cursor-pointer group"
-                    >
-                      {/* Risk Badge */}
-                      <td className="py-3.5 px-4 align-middle whitespace-nowrap">
-                        <div className="flex flex-col items-center justify-center gap-1 w-[136px]">
-                          {renderRiskBadge(level, displayScore)}
-                          {showSocEscalated && (
-                            <span className="inline-flex items-center justify-center gap-1.5 text-[10.5px] leading-none text-purple-700 dark:text-purple-300 font-medium whitespace-nowrap tracking-wide">
-                              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 dark:bg-purple-400 animate-pulse shrink-0" />
-                              <span className="leading-none">SOC Escalated</span>
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Sender */}
-                      <td className="py-3.5 px-4 align-middle">
-                        <div className="space-y-0.5 max-w-[220px]">
-                          <div className="font-semibold text-slate-900 group-hover:text-cyan-600 dark:text-white dark:group-hover:text-cyan-300 transition-colors truncate text-xs">
-                            {decodeMimeHeader(email.sender_name || email.sender)}
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-gray-400 truncate">
-                            {email.sender}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Subject & Preview */}
-                      <td className="py-3.5 px-4 align-middle">
-                        <div className="space-y-0.5 pr-4">
-                          <div className="font-medium text-slate-900 group-hover:text-cyan-600 dark:text-white dark:group-hover:text-cyan-200 transition-colors line-clamp-1 text-xs">
-                            {decodeMimeHeader(email.subject)}
-                          </div>
-                          {email.snippet && (
-                            <div className="text-[11px] text-slate-500 dark:text-gray-400 line-clamp-1">
-                              {decodeMimeHeader(email.snippet)}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Date */}
-                      <td className="py-3.5 px-4 align-middle text-slate-500 dark:text-gray-400 text-[11px] whitespace-nowrap">
-                        {new Date(email.received_at).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-3.5 px-4 align-middle text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              selectEmail(email);
-                            }}
-                            className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/20 text-xs flex items-center gap-1.5 font-medium transition-all cursor-pointer"
-                            title="Inspect Details & Deep Forensics"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            View
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Footer */}
-        <div className="p-3.5 sm:p-4 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 dark:text-gray-400 bg-slate-50/50 dark:bg-white/[0.01]">
-          <div>
-            Showing{' '}
-            <span className="text-slate-900 dark:text-white font-semibold">
-              {filteredEmails.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}
-            </span>{' '}
-            to{' '}
-            <span className="text-slate-900 dark:text-white font-semibold">
-              {Math.min(currentPage * itemsPerPage, filteredEmails.length)}
-            </span>{' '}
-            of <span className="text-slate-900 dark:text-white font-semibold">{filteredEmails.length}</span> emails
-          </div>
-
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+      {/* ── Pagination ── */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredSessions.length)} of {filteredSessions.length} sessions
+          </p>
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/5 dark:hover:bg-white/10 dark:text-gray-300 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs px-2">
-              Page {currentPage} of {totalPages}
+            <span className="text-xs font-semibold px-2">
+              {currentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/5 dark:hover:bg-white/10 dark:text-gray-300 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
-      </div>
-    </SlideIn>
+      )}
 
-      {/* Side Detail Drawer */}
-      <EmailDetailDrawer
-        email={selectedEmail}
-        isOpen={Boolean(selectedEmail)}
-        onClose={() => selectEmail(null)}
-        onNavigate={onNavigate}
-      />
+      {/* ── Interactive Handshake Inspector Modal ── */}
+      {selectedSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div
+            className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-3xl bg-white dark:bg-[#0c0f19] border border-slate-200 dark:border-white/15 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between bg-slate-50 dark:bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                      TLS Handshake Inspection
+                    </h2>
+                    {renderTlsBadge(selectedSession.tlsVersion)}
+                  </div>
+                  <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    Session ID: {selectedSession.id} • {selectedSession.serverHost}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedSession(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-      {/* Google OAuth 2.0 Setup Modal */}
-      <GoogleSetupModal
-        isOpen={isGoogleModalOpen}
-        onClose={() => setIsGoogleModalOpen(false)}
-        onSuccessConnect={handleGoogleModalSuccess}
-      />
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 overflow-y-auto space-y-5 text-xs">
+              {/* Endpoint Overview */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-mono">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Client Endpoint</span>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
+                    {selectedSession.clientIp}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Server Endpoint (SNI)</span>
+                  <div className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mt-0.5 truncate">
+                    {selectedSession.sni} ({selectedSession.serverIp}:{selectedSession.serverPort})
+                  </div>
+                </div>
+              </div>
+
+              {/* Handshake Details */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-cyan-500" />
+                  Handshake Parameters
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-1.5">
+                    <span className="text-[11px] text-slate-500">Negotiated Cipher Suite</span>
+                    <div className="font-mono font-bold text-slate-900 dark:text-white break-all">
+                      {selectedSession.cipherSuite}
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-1.5">
+                    <span className="text-[11px] text-slate-500">Key Exchange / Curve</span>
+                    <div className="font-mono font-bold text-slate-900 dark:text-white break-all">
+                      {selectedSession.keyExchange}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Certificate Chain Analysis */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-violet-500" />
+                  X.509 Certificate Chain
+                </h4>
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-2 font-mono text-[11px]">
+                  <div>
+                    <span className="text-slate-400">Subject: </span>
+                    <span className="text-slate-800 dark:text-slate-200 font-semibold">{selectedSession.certificate.subject}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Issuer CA: </span>
+                    <span className="text-slate-800 dark:text-slate-200">{selectedSession.certificate.issuer}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-4 pt-1 text-slate-600 dark:text-slate-400">
+                    <span>Key Type: <strong className="text-slate-900 dark:text-white">{selectedSession.certificate.keyType}</strong></span>
+                    <span>Signature: <strong className="text-slate-900 dark:text-white">{selectedSession.certificate.sigAlg}</strong></span>
+                    <span>Status: <strong className={selectedSession.certificate.isExpired ? 'text-red-500' : 'text-emerald-500'}>{selectedSession.certificate.validity}</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cryptographic Posture & Vulnerabilities */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+                  Posture Assessment & Vulnerability Findings
+                </h4>
+                <div
+                  className={`p-4 rounded-xl border ${
+                    selectedSession.posture === 'critical'
+                      ? 'bg-red-500/10 border-red-500/30'
+                      : selectedSession.posture === 'warning'
+                      ? 'bg-amber-500/10 border-amber-500/30'
+                      : 'bg-emerald-500/10 border-emerald-500/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+                      Posture Status: {selectedSession.posture}
+                    </span>
+                    <span className="font-mono text-xs font-bold">
+                      Risk Score: {selectedSession.threatScore} / 100
+                    </span>
+                  </div>
+
+                  {selectedSession.vulnerabilities.length > 0 ? (
+                    <ul className="list-disc list-inside space-y-1 text-slate-800 dark:text-slate-200 mb-3">
+                      {selectedSession.vulnerabilities.map((v, i) => (
+                        <li key={i}>{v}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-emerald-700 dark:text-emerald-300 mb-3">
+                      No cryptographic vulnerabilities detected. Forward secrecy is active and certificate chain is authenticated.
+                    </p>
+                  )}
+
+                  <div className="pt-2 border-t border-slate-200/50 dark:border-white/10">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
+                      Remediation Plan:
+                    </span>
+                    <p className="text-xs font-medium text-slate-900 dark:text-white mt-0.5">
+                      {selectedSession.recommendation}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-5 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-white/5">
+              <button
+                onClick={() => setSelectedSession(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all cursor-pointer"
+              >
+                Close
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const sid = selectedSession.id;
+                    setSelectedSession(null);
+                    onNavigate(`emails/${encodeURIComponent(sid)}/forensics`);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 dark:bg-white/15 hover:bg-slate-800 dark:hover:bg-white/25 transition-all cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open Deep Forensics</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSelectedSession(null);
+                    onNavigate('submit-report');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-md transition-all cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Submit PCAP Capture</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
