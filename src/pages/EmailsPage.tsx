@@ -490,32 +490,41 @@ export function EmailsPage({ onNavigate }: EmailsPageProps) {
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          {/* Action buttons: Equal 3-column grid on mobile, inline-flex on larger screens */}
+          <div className="grid grid-cols-3 gap-2 w-full lg:w-auto lg:flex lg:items-center lg:gap-2.5 shrink-0 pt-2 lg:pt-0">
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+              className="w-full lg:w-auto h-12 lg:h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
               title="Refresh session telemetry"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-cyan-500' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
+              <RefreshCw className={`w-4 h-4 shrink-0 ${isRefreshing ? 'animate-spin text-cyan-500' : ''}`} />
+              <div className="flex flex-col sm:flex-row text-left leading-tight sm:leading-normal">
+                <span>Refresh</span>
+                <span className="sm:hidden text-[9px] text-slate-400 dark:text-slate-500">Telemetry</span>
+              </div>
             </button>
 
             <button
               onClick={() => onNavigate('check-status')}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95"
+              className="w-full lg:w-auto h-12 lg:h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95"
             >
-              <ClipboardList className="w-4 h-4 text-violet-500" />
-              <span>Check Status</span>
+              <ClipboardList className="w-4 h-4 text-violet-500 shrink-0" />
+              <div className="flex flex-col sm:flex-row sm:gap-1 text-left leading-tight sm:leading-normal">
+                <span>Check</span>
+                <span>Status</span>
+              </div>
             </button>
 
             <button
               onClick={() => onNavigate('submit-report')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-md shadow-cyan-500/20 transition-all cursor-pointer active:scale-95"
+              className="w-full lg:w-auto h-12 lg:h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-md shadow-cyan-500/20 transition-all cursor-pointer active:scale-95"
             >
-              <Upload className="w-4 h-4" />
-              <span>Submit PCAP</span>
+              <Upload className="w-4 h-4 shrink-0" />
+              <div className="flex flex-col sm:flex-row sm:gap-1 text-left leading-tight sm:leading-normal">
+                <span>Submit</span>
+                <span>PCAP</span>
+              </div>
             </button>
           </div>
         </div>
