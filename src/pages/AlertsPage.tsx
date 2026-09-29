@@ -15,6 +15,11 @@ import {
   MailSearch,
   Sparkles,
   ChevronDown,
+  Lock,
+  Key,
+  ShieldOff,
+  Clock,
+  AlertOctagon,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -86,12 +91,14 @@ const STATUS_CONFIG: Record<AlertStatus, { color: string; bg: string; border: st
 const STATUS_ORDER: AlertStatus[] = ['new', 'acknowledged', 'investigating', 'resolved'];
 
 const ALERT_TYPE_ICONS: Record<AlertType, LucideIcon> = {
-  'BEC Detection': ShieldAlert,
-  'Lookalike Domain': Globe,
-  'Authentication Failure': ShieldX,
-  'Suspicious URL': Link2,
-  'Campaign Correlation': Network,
-  'Origin Anomaly': MapPin,
+  'Downgrade Attack': ShieldAlert,
+  'Weak Cipher': Lock,
+  'Expired Certificate': Clock,
+  'Weak Key': Key,
+  'MitM Detected': Network,
+  'STARTTLS Stripping': ShieldOff,
+  'Protocol Violation': AlertOctagon,
+  'Self-Signed Certificate': ShieldX,
 };
 
 

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import type { EmailAnalysisResult } from '@/services/claudeService';
+import type { EmailAnalysisResult, AlertLevel } from '@/services/claudeService';
 import { buildDemoAnalysisResult } from '@/services/claudeService';
 import type { ReportData } from '@/data/mockData';
 import {

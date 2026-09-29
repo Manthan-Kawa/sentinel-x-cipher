@@ -69,8 +69,11 @@ function AppShell() {
 
     const email = localStorage.getItem(KEY_USER) || '';
     const rawRole = opts?.role || (localStorage.getItem(KEY_USER_ROLE) as UserRole) || (email ? deriveRoleFromEmail(email) : 'user');
-    const isMasterAnalyst = email.toLowerCase().trim() === 'sentinelx.analyst@gmail.com' || email.toLowerCase().trim() === 'analyst@gmail.com';
-    const effectiveRole: UserRole = isMasterAnalyst && rawRole === 'analyst' ? 'analyst' : (email ? deriveRoleFromEmail(email) : 'user');
+    const isMasterAnalyst =
+      email.toLowerCase().trim() === 'sentinelx.analyst@gmail.com' ||
+      email.toLowerCase().trim() === 'analyst@gmail.com' ||
+      email.toLowerCase().trim() === 'demo.analyst@sentinelx.io';
+    const effectiveRole: UserRole = isMasterAnalyst ? 'analyst' : (rawRole === 'analyst' ? 'analyst' : (email ? deriveRoleFromEmail(email) : 'user'));
 
     const effectiveEmail = email || (effectiveRole === 'analyst' ? 'sentinelx.analyst@gmail.com' : 'demouser1@gmail.com');
     localStorage.setItem(KEY_AUTH, 'true');

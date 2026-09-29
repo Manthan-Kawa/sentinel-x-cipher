@@ -23,6 +23,8 @@ import {
   Archive,
   Check,
   Download,
+  Lock,
+  Key,
 } from 'lucide-react';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { useEvidence } from '@/contexts/EvidenceContext';
@@ -30,6 +32,9 @@ import type { EmailAnalysisResult } from '@/services/claudeService';
 
 import {
   DEMO_EMAIL,
+  DEMO_PCAP_SESSION,
+  TLS_HANDSHAKE_STEPS,
+  type TLSHandshakeDetail,
   SMTP_RELAYS,
   EXTENDED_HEADERS,
   HEADER_FACTS,
@@ -40,9 +45,9 @@ import {
 import { CopyButton } from '@/components/CopyButton';
 
 const AUTH_CARDS = [
-  { name: 'SPF', result: 'FAIL', detail: 'Sending IP 185.220.101.47 not designated by domain SPF record' },
-  { name: 'DKIM', result: 'FAIL', detail: 'Signature present but verification returned permerror' },
-  { name: 'DMARC', result: 'FAIL', detail: 'Neither SPF nor DKIM aligned with From domain' },
+  { name: 'TLS Protocol', result: 'FAIL', detail: 'Negotiated TLS 1.0 — deprecated by RFC 8996; requires TLS 1.2 or TLS 1.3' },
+  { name: 'Cipher Suite', result: 'FAIL', detail: 'Selected RC4-128 stream cipher — prohibited under RFC 7465; BEAST/POODLE risk' },
+  { name: 'Certificate Trust', result: 'FAIL', detail: 'Self-signed certificate from untrusted CA expired 2024-01-01; no chain of trust' },
 ];
 
 const FACT_ICON: Record<HeaderFact['status'], typeof CheckCircle2> = {
@@ -58,11 +63,11 @@ const FACT_COLOR: Record<HeaderFact['status'], string> = {
 };
 
 const HEADER_CATEGORY_COLOR: Record<ExtendedHeader['category'], string> = {
-  routing: 'text-cyan-400',
-  auth: 'text-red-400',
-  identity: 'text-purple-400',
-  content: 'text-gray-300',
-  metadata: 'text-gray-500',
+  handshake: 'text-cyan-400',
+  cipher: 'text-purple-400',
+  certificate: 'text-amber-400',
+  transport: 'text-blue-400',
+  vulnerability: 'text-red-400',
 };
 
 /* ─── Slide-in entrance wrapper ─── */
@@ -143,9 +148,9 @@ export function HeaderForensicsPage({ onNavigate }: { onNavigate?: (route: strin
               </button>
             )}
             <div className="min-w-0 flex-1">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-snug">Header Forensics</h2>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-snug">Cryptographic Forensics</h2>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-gray-400 mt-0.5 leading-relaxed">
-                Deep forensic parsing of SMTP relay hops, email authentication, and header anomalies
+                Deep inspection of TLS handshakes, cipher suite negotiations, X.509 certificates, and cryptographic posture
               </p>
             </div>
           </div>
@@ -169,7 +174,7 @@ export function HeaderForensicsPage({ onNavigate }: { onNavigate?: (route: strin
                     <Link className="w-3.5 h-3.5 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 dark:text-gray-400 font-bold leading-none mb-0.5">Synced from Email Analysis</p>
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500 dark:text-gray-400 font-bold leading-none mb-0.5">Synced from Session Analysis</p>
                     <p className="text-xs font-bold text-slate-900 dark:text-white font-mono truncate block" title={`${currentResult.case_id || 'ANALYSIS-ACTIVE'}${subjectHeader ? ` — ${subjectHeader}` : ''}`}>
                       <span>{currentResult.case_id || 'ANALYSIS-ACTIVE'}</span>
                       {subjectHeader && <span className="text-slate-600 dark:text-gray-300 font-normal"> — {subjectHeader}</span>}
@@ -186,7 +191,7 @@ export function HeaderForensicsPage({ onNavigate }: { onNavigate?: (route: strin
                   </span>
                   {typeof currentResult.threat_score === 'number' && (
                     <span className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-500/20 border border-purple-300 dark:border-purple-500/30 shrink-0 whitespace-nowrap">
-                      Score: {currentResult.threat_score}/100
+                      Posture Score: {currentResult.threat_score}/100
                     </span>
                   )}
                   {typeof currentResult.confidence === 'number' && (
@@ -213,9 +218,9 @@ export function HeaderForensicsPage({ onNavigate }: { onNavigate?: (route: strin
             </div>
 
             <div className="max-w-md space-y-2">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">No Email Analyzed in Session</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">No PCAP Session Analyzed</h3>
               <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed font-mono">
-                Upload or paste an email in Email Analyzer to inspect raw RFC-5322 headers, cryptographic SPF/DKIM/DMARC verdicts, and SMTP relay hop telemetry.
+                Upload or analyze network capture in PCAP Analyzer to inspect TLS handshake messages, cipher negotiations, and X.509 certificate chains.
               </p>
             </div>
 
@@ -229,14 +234,14 @@ export function HeaderForensicsPage({ onNavigate }: { onNavigate?: (route: strin
                 }}
               >
                 <Mail className="w-4 h-4" />
-                Go to Email Analyzer
+                Go to PCAP Analyzer
               </button>
               <button
                 onClick={loadDemoCase}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:text-black dark:text-purple-200 dark:hover:text-purple-100 bg-slate-100 hover:bg-slate-200 dark:bg-purple-900/30 hover:dark:bg-purple-900/50 border border-slate-200 dark:border-purple-500/45 hover:dark:border-purple-400/60 transition-all font-mono cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                Load Sample Demo Email
+                Load Sample Demo Session
               </button>
             </div>
           </div>
@@ -247,7 +252,11 @@ export function HeaderForensicsPage({ onNavigate }: { onNavigate?: (route: strin
             <EmailSummary result={currentResult} />
           </SlideIn>
 
-          <SlideIn delay={160} direction="up">
+          <SlideIn delay={140} direction="up">
+            <TLSHandshakeSequence />
+          </SlideIn>
+
+          <SlideIn delay={190} direction="up">
             <AuthCards result={currentResult} />
           </SlideIn>
 
@@ -274,7 +283,63 @@ export function HeaderForensicsPage({ onNavigate }: { onNavigate?: (route: strin
 }
 
 /* ═══════════════════════════════════════════════════════════
-   EMAIL SUMMARY
+   TLS HANDSHAKE SEQUENCE COMPONENT
+═══════════════════════════════════════════════════════════ */
+function TLSHandshakeSequence() {
+  return (
+    <div className="rounded-2xl p-5 bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Lock className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+            TLS Handshake Sequence & Protocol Inspection
+          </h3>
+          <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">
+            Step-by-step cryptographic exchange reconstruction (ClientHello, ServerHello, Certificate Exchange)
+          </p>
+        </div>
+        <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider text-red-500 bg-red-500/10 border border-red-500/30">
+          Downgrade Intercepted
+        </span>
+      </div>
+
+      <div className="space-y-2.5">
+        {TLS_HANDSHAKE_STEPS.map((step, idx) => {
+          const isFail = step.status === 'fail';
+          const isWarn = step.status === 'warn';
+          const badgeClass = isFail
+            ? 'text-red-400 bg-red-500/10 border-red-500/30'
+            : isWarn
+            ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+            : 'text-green-400 bg-green-500/10 border-green-500/30';
+          return (
+            <div
+              key={idx}
+              className="p-3.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.06] flex flex-col md:flex-row md:items-center justify-between gap-3"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center text-xs font-mono font-bold shrink-0 mt-0.5">
+                  {idx + 1}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">{step.phase}</span>
+                    <span className="text-[10px] font-mono text-slate-500 dark:text-gray-400">({step.direction})</span>
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${badgeClass}`}>{step.message}</span>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-gray-400 mt-1">{step.detail}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SESSION / CRYPTO SUMMARY
 ═══════════════════════════════════════════════════════════ */
 function EmailSummary({ result }: { result: EmailAnalysisResult | null }) {
   const getHeader = (key: string) => {
@@ -282,26 +347,17 @@ function EmailSummary({ result }: { result: EmailAnalysisResult | null }) {
     return result.headers.find((h) => h?.key?.toLowerCase() === key.toLowerCase())?.value ?? '';
   };
 
-  const domain = result?.threat_intel?.domain || 'unknown';
-  const caseId = result?.case_id || 'case';
+  const domain = result?.threat_intel?.domain || 'mail.attacker-relay.example';
+  const sendingIp = result?.threat_intel?.sending_ip || DEMO_PCAP_SESSION.sourceIP;
 
-  const fields = result
-    ? [
-        { label: 'From',        value: getHeader('from') || DEMO_EMAIL.from,     icon: Mail,      highlight: true },
-        { label: 'Reply-To',    value: getHeader('reply-to') || DEMO_EMAIL.replyTo, icon: ArrowRight, highlight: true },
-        { label: 'Return-Path', value: getHeader('return-path') || `<noreply@${domain}>`, icon: Mail },
-        { label: 'Message-ID',  value: getHeader('message-id') || `<${caseId}@${domain}>`, icon: Mail },
-        { label: 'Subject',     value: getHeader('subject') || '(no subject)',    icon: Mail },
-        { label: 'Date',        value: getHeader('date') || DEMO_EMAIL.date,      icon: Clock },
-      ]
-    : [
-        { label: 'From',        value: DEMO_EMAIL.from,    icon: Mail,      highlight: true },
-        { label: 'Reply-To',    value: DEMO_EMAIL.replyTo, icon: ArrowRight, highlight: true },
-        { label: 'Return-Path', value: '<finance@micros0ft-support.example>', icon: Mail },
-        { label: 'Message-ID',  value: '<a7f2c8e1@mail-micros0ft-support.example>', icon: Mail },
-        { label: 'Subject',     value: DEMO_EMAIL.subject, icon: Mail },
-        { label: 'Date',        value: DEMO_EMAIL.date,    icon: Clock },
-      ];
+  const fields = [
+    { label: 'Source IP / Port', value: `${sendingIp}:48920`, icon: Server, highlight: true },
+    { label: 'Destination Host', value: `${DEMO_PCAP_SESSION.destIP}:25 (acme-mailgw-03)`, icon: ArrowRight, highlight: false },
+    { label: 'Protocol Mode', value: 'SMTP STARTTLS (Port 25)', icon: Lock, highlight: false },
+    { label: 'Negotiated TLS', value: getHeader('x-tls-version') || DEMO_PCAP_SESSION.tlsVersion, icon: ShieldAlert, highlight: true },
+    { label: 'Selected Cipher Suite', value: getHeader('x-cipher-suite') || DEMO_PCAP_SESSION.cipherSuite, icon: Key, highlight: true },
+    { label: 'Session Timestamp', value: DEMO_PCAP_SESSION.timestamp, icon: Clock, highlight: false },
+  ];
 
   return (
     <div
@@ -309,10 +365,10 @@ function EmailSummary({ result }: { result: EmailAnalysisResult | null }) {
     >
       <div className="mb-4">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <Mail className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-          Email Summary
+          <Lock className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+          Network Session & Cryptographic Summary
         </h3>
-        <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Key identity and routing fields extracted from the email</p>
+        <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Core connection attributes, transport protocol, and negotiated security state</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {fields.map((f) => {
@@ -538,14 +594,14 @@ function ExpandableHeaders({ result }: { result: EmailAnalysisResult | null }) {
 
   const liveHeaders = Array.isArray(result?.headers) && result!.headers.length > 0
     ? result!.headers.map((h, idx) => ({
-        key: h?.key || `Header-${idx}`,
+        key: h?.key || `Param-${idx}`,
         value: h?.value || '',
         category: (
-          ['from','reply-to','to','return-path','sender'].includes((h?.key || '').toLowerCase()) ? 'identity'
-          : ['received','x-originating-ip'].includes((h?.key || '').toLowerCase()) ? 'routing'
-          : ['dkim-signature','authentication-results','received-spf','dmarc'].some(k => (h?.key || '').toLowerCase().includes(k)) ? 'auth'
-          : ['content-type','content-transfer-encoding','mime-version'].includes((h?.key || '').toLowerCase()) ? 'content'
-          : 'metadata'
+          ['tls', 'handshake', 'version', 'client', 'server'].some(k => (h?.key || '').toLowerCase().includes(k)) ? 'handshake'
+          : ['cipher', 'encryption', 'hash', 'aes', 'rc4', 'mac', 'key exchange'].some(k => (h?.key || '').toLowerCase().includes(k)) ? 'cipher'
+          : ['cert', 'issuer', 'subject', 'public key', 'valid', 'rsa'].some(k => (h?.key || '').toLowerCase().includes(k)) ? 'certificate'
+          : ['protocol', 'port', 'ip', 'stream', 'tcp', 'host'].some(k => (h?.key || '').toLowerCase().includes(k)) ? 'transport'
+          : 'vulnerability'
         ) as ExtendedHeader['category'],
         id: `live-${idx}`,
       }))

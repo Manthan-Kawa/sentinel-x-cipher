@@ -1,5 +1,6 @@
 export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 export type ThreatType = 'BEC' | 'Phishing' | 'Malware' | 'Credential Harvesting' | 'Spoofing' | 'Ransomware' | 'C2' | 'Spam';
+export type CryptoThreatType = 'Downgrade Attack' | 'Weak Cipher' | 'Man-in-the-Middle (MitM)' | 'Expired Certificate' | 'Weak Key' | 'Self-Signed Certificate' | 'Protocol Violation' | 'Unknown';
 
 export interface KPIData {
   label: string;
@@ -77,21 +78,21 @@ export interface DemoEmail {
 }
 
 export const KPIS: KPIData[] = [
-  { label: 'Emails Analyzed', value: '14,892', delta: '+8.2%', trend: 'up', icon: 'MailCheck', accent: 'blue' },
-  { label: 'Threats Detected', value: '1,247', delta: '+12.4%', trend: 'up', icon: 'ShieldAlert', accent: 'red' },
-  { label: 'Critical Threats', value: '38', delta: '+3', trend: 'up', icon: 'AlertOctagon', accent: 'red' },
+  { label: 'PCAP Sessions Analyzed', value: '14,892', delta: '+8.2%', trend: 'up', icon: 'MailCheck', accent: 'blue' },
+  { label: 'Crypto Weaknesses Found', value: '1,247', delta: '+12.4%', trend: 'up', icon: 'ShieldAlert', accent: 'red' },
+  { label: 'Critical Vulnerabilities', value: '38', delta: '+3', trend: 'up', icon: 'AlertOctagon', accent: 'red' },
   { label: 'Active Investigations', value: '17', delta: '+2', trend: 'up', icon: 'Search', accent: 'amber' },
-  { label: 'Detection Accuracy', value: '98.4%', delta: '+0.3%', trend: 'up', icon: 'Target', accent: 'green' },
-  { label: 'Campaigns', value: '6', delta: '+1', trend: 'up', icon: 'Network', accent: 'teal' },
+  { label: 'Posture Score', value: '61.2%', delta: '-2.1%', trend: 'down', icon: 'Target', accent: 'green' },
+  { label: 'TLS Campaigns', value: '6', delta: '+1', trend: 'up', icon: 'Network', accent: 'teal' },
 ];
 
 export const THREAT_DISTRIBUTION: ThreatDistribution[] = [
-  { name: 'BEC', value: 34, color: '#ef4444' },
-  { name: 'Phishing', value: 28, color: '#f97316' },
-  { name: 'Credential Harvesting', value: 18, color: '#f59e0b' },
-  { name: 'Malware', value: 12, color: '#3b82f6' },
-  { name: 'Spoofing', value: 5, color: '#14b8a6' },
-  { name: 'Other', value: 3, color: '#6b7280' },
+  { name: 'TLS 1.3', value: 48, color: '#22c55e' },
+  { name: 'TLS 1.2', value: 31, color: '#3b82f6' },
+  { name: 'TLS 1.1', value: 12, color: '#f59e0b' },
+  { name: 'TLS 1.0', value: 6, color: '#f97316' },
+  { name: 'SSLv3', value: 2, color: '#ef4444' },
+  { name: 'Unknown', value: 1, color: '#6b7280' },
 ];
 
 export const HOURLY_ACTIVITY: ActivityPoint[] = [
@@ -109,83 +110,129 @@ export const HOURLY_ACTIVITY: ActivityPoint[] = [
   { hour: '22:00', threats: 5, scanned: 154 },
 ];
 
-export const RECENT_THREATS: ThreatRecord[] = [
+// ─── Network Session Data Model ─────────────────────────────────────────────
+
+export interface NetworkSession {
+  id: string;
+  timestamp: string;
+  sourceIP: string;
+  destIP: string;
+  protocol: 'SMTP' | 'IMAP' | 'POP3' | 'SMTPS' | 'IMAPS';
+  tlsVersion: 'TLS 1.3' | 'TLS 1.2' | 'TLS 1.1' | 'TLS 1.0' | 'SSLv3' | 'None';
+  cipherSuite: string;
+  certificate: {
+    issuer: string;
+    subject: string;
+    expiry: string;
+    keyLength: number;
+    keyAlgo: string;
+    selfSigned: boolean;
+    expired: boolean;
+  };
+  threatType: CryptoThreatType;
+  severity: Severity;
+  status: 'open' | 'investigating' | 'contained' | 'resolved';
+  riskScore: number;
+}
+
+export const RECENT_THREATS: NetworkSession[] = [
   {
-    id: 'TH-2024-0892',
+    id: 'NS-2026-0892',
     timestamp: '2026-08-25 14:32:11',
-    sender: 'finance@micros0ft-support.example',
-    subject: 'Urgent: Payment Verification Required',
-    type: 'BEC',
+    sourceIP: '185.220.101.47',
+    destIP: '10.14.22.5',
+    protocol: 'SMTP',
+    tlsVersion: 'TLS 1.0',
+    cipherSuite: 'TLS_RSA_WITH_RC4_128_SHA',
+    certificate: { issuer: 'Self-Signed', subject: 'mail.attacker.example', expiry: '2024-01-01', keyLength: 1024, keyAlgo: 'RSA', selfSigned: true, expired: true },
+    threatType: 'Downgrade Attack',
     severity: 'critical',
     status: 'investigating',
     riskScore: 96,
-    destination: 'cfo@acme-corp.example',
   },
   {
-    id: 'TH-2024-0891',
+    id: 'NS-2026-0891',
     timestamp: '2026-08-25 13:18:44',
-    sender: 'no-reply@paypa1-secure.example',
-    subject: 'Your account has been limited',
-    type: 'Credential Harvesting',
+    sourceIP: '45.137.21.88',
+    destIP: '10.14.22.6',
+    protocol: 'IMAP',
+    tlsVersion: 'TLS 1.1',
+    cipherSuite: 'TLS_RSA_WITH_AES_128_CBC_SHA',
+    certificate: { issuer: 'Let\'s Encrypt', subject: 'mail.paypa1-secure.example', expiry: '2025-03-15', keyLength: 2048, keyAlgo: 'RSA', selfSigned: false, expired: false },
+    threatType: 'Weak Cipher',
     severity: 'high',
     status: 'open',
     riskScore: 87,
-    destination: 'billing@acme-corp.example',
   },
   {
-    id: 'TH-2024-0890',
+    id: 'NS-2026-0890',
     timestamp: '2026-08-25 12:05:22',
-    sender: 'invoices@vendor-portal.example',
-    subject: 'Invoice #4471 - Overdue Payment',
-    type: 'Phishing',
+    sourceIP: '91.243.59.12',
+    destIP: '10.14.22.7',
+    protocol: 'SMTP',
+    tlsVersion: 'TLS 1.2',
+    cipherSuite: 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384',
+    certificate: { issuer: 'DigiCert', subject: 'mail.vendor-portal.example', expiry: '2027-06-01', keyLength: 4096, keyAlgo: 'RSA', selfSigned: false, expired: false },
+    threatType: 'Man-in-the-Middle (MitM)',
     severity: 'high',
     status: 'contained',
     riskScore: 82,
-    destination: 'ap@acme-corp.example',
   },
   {
-    id: 'TH-2024-0889',
+    id: 'NS-2026-0889',
     timestamp: '2026-08-25 11:47:09',
-    sender: 'ceo@acme-corp.example',
-    subject: 'Wire transfer request - confidential',
-    type: 'Spoofing',
+    sourceIP: '190.34.176.22',
+    destIP: '10.14.22.5',
+    protocol: 'SMTP',
+    tlsVersion: 'SSLv3',
+    cipherSuite: 'TLS_RSA_WITH_DES_CBC_SHA',
+    certificate: { issuer: 'Unknown CA', subject: 'mail.acme-relay.example', expiry: '2023-12-31', keyLength: 512, keyAlgo: 'RSA', selfSigned: true, expired: true },
+    threatType: 'Downgrade Attack',
     severity: 'critical',
     status: 'investigating',
     riskScore: 94,
-    destination: 'finance@acme-corp.example',
   },
   {
-    id: 'TH-2024-0888',
+    id: 'NS-2026-0888',
     timestamp: '2026-08-25 10:33:51',
-    sender: 'tracking@dhl-express-notify.example',
-    subject: 'Package delivery failed - action required',
-    type: 'Malware',
+    sourceIP: '198.51.100.77',
+    destIP: '10.14.22.8',
+    protocol: 'POP3',
+    tlsVersion: 'TLS 1.2',
+    cipherSuite: 'TLS_RSA_WITH_AES_128_CBC_SHA256',
+    certificate: { issuer: 'Comodo', subject: 'pop3.dhl-express-notify.example', expiry: '2026-11-30', keyLength: 2048, keyAlgo: 'RSA', selfSigned: false, expired: false },
+    threatType: 'Weak Cipher',
     severity: 'medium',
     status: 'resolved',
     riskScore: 61,
-    destination: 'warehouse@acme-corp.example',
   },
   {
-    id: 'TH-2024-0887',
+    id: 'NS-2026-0887',
     timestamp: '2026-08-25 09:22:17',
-    sender: 'hr@acme-payroll.example',
-    subject: 'Updated direct deposit information',
-    type: 'BEC',
+    sourceIP: '203.0.113.91',
+    destIP: '10.14.22.9',
+    protocol: 'IMAPS',
+    tlsVersion: 'TLS 1.3',
+    cipherSuite: 'TLS_AES_128_GCM_SHA256',
+    certificate: { issuer: 'Self-Signed', subject: 'imap.acme-payroll.example', expiry: '2025-01-15', keyLength: 1024, keyAlgo: 'RSA', selfSigned: true, expired: false },
+    threatType: 'Weak Key',
     severity: 'high',
     status: 'contained',
     riskScore: 79,
-    destination: 'payroll@acme-corp.example',
   },
   {
-    id: 'TH-2024-0886',
+    id: 'NS-2026-0886',
     timestamp: '2026-08-25 08:14:03',
-    sender: 'support@micros0ft-365.example',
-    subject: 'Password expiration notice',
-    type: 'Credential Harvesting',
+    sourceIP: '203.0.113.55',
+    destIP: '10.14.22.5',
+    protocol: 'SMTP',
+    tlsVersion: 'TLS 1.1',
+    cipherSuite: 'TLS_RSA_WITH_3DES_EDE_CBC_SHA',
+    certificate: { issuer: 'Unknown CA', subject: 'mail.micros0ft-365.example', expiry: '2025-08-01', keyLength: 2048, keyAlgo: 'RSA', selfSigned: false, expired: false },
+    threatType: 'Weak Cipher',
     severity: 'high',
     status: 'open',
     riskScore: 85,
-    destination: 'it@acme-corp.example',
   },
 ];
 
@@ -204,209 +251,247 @@ export const GEO_THREATS: GeoThreat[] = [
   { id: 'G12', city: 'Hanoi', country: 'Vietnam', lat: 21.03, lng: 105.85, count: 11, severity: 'medium' },
 ];
 
-export const DEMO_EMAIL: DemoEmail = {
-  from: 'finance@micros0ft-support.example',
-  replyTo: 'secure-verification@example',
-  to: 'cfo@acme-corp.example',
-  subject: 'Urgent: Payment Verification Required',
-  date: '2026-08-25 14:31:48 UTC',
-  receivedVia: 'SMTP / acme-mailgw-03',
-  bodyPreview:
-    'Dear CFO,\n\nWe are writing to inform you that your recent payment of $48,250.00 to Microsoft is currently on hold pending verification. To avoid cancellation of services, please verify your account immediately by accessing the secure verification portal below.\n\nYour immediate attention is required. Failure to verify within 24 hours will result in service suspension.\n\nClick here to verify your payment: https://micros0ft-support.example/verify?id=PX9471\n\nRegards,\nMicrosoft Billing Department',
-  headers: [
-    { key: 'Return-Path', value: '<finance@micros0ft-support.example>' },
-    { key: 'Received', value: 'from mail-micros0ft-support.example (185.220.101.47) by acme-mailgw-03.example' },
-    { key: 'Received', value: 'from localhost (localhost [127.0.0.1]) by mail-micros0ft-support.example' },
-    { key: 'From', value: 'finance@micros0ft-support.example' },
-    { key: 'To', value: 'cfo@acme-corp.example' },
-    { key: 'Reply-To', value: 'secure-verification@example' },
-    { key: 'Subject', value: 'Urgent: Payment Verification Required' },
-    { key: 'Date', value: 'Mon, 25 Aug 2026 14:31:48 +0000' },
-    { key: 'Message-ID', value: '<a7f2c8e1@mail-micros0ft-support.example>' },
-    { key: 'X-Mailer', value: 'PHPMailer 6.5 / custom-build' },
-    { key: 'Authentication-Results', value: 'acme-mailgw-03.example; spf=fail; dkim=fail; dmarc=fail' },
-    { key: 'Received-SPF', value: 'Fail (micros0ft-support.example: domain not authorized)' },
-    { key: 'DKIM-Signature', value: 'v=1; a=rsa-sha256; d=micros0ft-support.example; s=default; b=...' },
-  ],
+// ─── Demo PCAP Session (replaces DEMO_EMAIL) ─────────────────────────────
+
+export interface TLSHandshakeDetail {
+  phase: string;
+  direction: 'Client → Server' | 'Server → Client' | 'Bidirectional';
+  message: string;
+  detail: string;
+  status: 'ok' | 'warn' | 'fail';
+}
+
+export const DEMO_PCAP_SESSION: NetworkSession = {
+  id: 'NS-2026-DEMO',
+  timestamp: '2026-08-25 14:31:48 UTC',
+  sourceIP: '185.220.101.47',
+  destIP: '10.14.22.5',
+  protocol: 'SMTP',
+  tlsVersion: 'TLS 1.0',
+  cipherSuite: 'TLS_RSA_WITH_RC4_128_SHA',
+  certificate: {
+    issuer: 'Self-Signed (Unknown CA)',
+    subject: 'mail.attacker-relay.example',
+    expiry: '2024-01-01',
+    keyLength: 1024,
+    keyAlgo: 'RSA',
+    selfSigned: true,
+    expired: true,
+  },
+  threatType: 'Downgrade Attack',
+  severity: 'critical',
+  status: 'investigating',
+  riskScore: 96,
 };
+
+export const DEMO_EMAIL = {
+  id: 'DEMO-PCAP-001',
+  subject: '[SMTP Posture Alert] TLS Downgrade & Expired Certificate Intercepted',
+  from: '185.220.101.47:48920 (FlokiNET Bulletproof)',
+  replyTo: '10.14.22.5:25 (acme-mailgw-03.acme-corp.example)',
+  date: '2026-08-25 14:31:48 UTC',
+  headers: [
+    { key: 'X-Session-ID', value: 'NS-2026-DEMO-0471' },
+    { key: 'X-Protocol', value: 'SMTP (Port 25 STARTTLS)' },
+    { key: 'X-TLS-Version', value: 'TLS 1.0 (Deprecated RFC 8996)' },
+    { key: 'X-Cipher-Suite', value: 'TLS_RSA_WITH_RC4_128_SHA (RFC 7465 Violation)' },
+    { key: 'X-Certificate-Issuer', value: 'CN=mail.attacker-relay.example (Self-Signed / Untrusted)' },
+    { key: 'X-Certificate-Status', value: 'EXPIRED (2024-01-01) — 236 days overdue' },
+    { key: 'X-Public-Key', value: 'RSA-1024 (Insecure < 2048-bit NIST threshold)' },
+    { key: 'X-Forward-Secrecy', value: 'NO (Static RSA Key Exchange)' },
+  ],
+  bodyPreview: 'CRITICAL SECURITY POSTURE ALERT: Live network capture revealed an active TLS Downgrade Attack on incoming SMTP transmission. The client and mail gateway negotiated deprecated TLS 1.0 with cryptographically prohibited cipher suite TLS_RSA_WITH_RC4_128_SHA. Untrusted self-signed RSA-1024 digital certificate presented by remote host.',
+  riskScore: 96,
+  severity: 'critical' as Severity,
+};
+
+export const TLS_HANDSHAKE_STEPS: TLSHandshakeDetail[] = [
+  { phase: 'Client Hello', direction: 'Client → Server', message: 'ClientHello', detail: 'Proposed cipher suites include RC4, DES, and TLS 1.0 — all deprecated', status: 'fail' },
+  { phase: 'Server Hello', direction: 'Server → Client', message: 'ServerHello', detail: 'Server selected TLS 1.0 / TLS_RSA_WITH_RC4_128_SHA — weak negotiation accepted', status: 'fail' },
+  { phase: 'Certificate', direction: 'Server → Client', message: 'Certificate Exchange', detail: 'Self-signed certificate (RSA-1024) presented — issuer unverified, expired 2024-01-01', status: 'fail' },
+  { phase: 'ServerKeyExchange', direction: 'Server → Client', message: 'ServerKeyExchange', detail: 'RSA key exchange without forward secrecy — session keys not ephemeral', status: 'warn' },
+  { phase: 'ChangeCipherSpec', direction: 'Bidirectional', message: 'ChangeCipherSpec', detail: 'Cipher downgrade to RC4 confirmed — stream cipher known to be broken', status: 'fail' },
+  { phase: 'Application Data', direction: 'Bidirectional', message: 'Encrypted Application Data', detail: 'SMTP data transfer under RC4 — susceptible to BEAST/POODLE attacks', status: 'warn' },
+];
+
 
 export const RISK_FACTORS: RiskFactor[] = [
   {
-    label: 'Sender impersonation',
+    label: 'Deprecated TLS 1.0 protocol negotiated',
     severity: 'critical',
-    detail: 'Display name "Microsoft Billing" does not match sender domain micros0ft-support.example',
+    detail: 'Server accepted TLS 1.0 handshake — vulnerable to BEAST and POODLE attacks; deprecated since RFC 8996 (2021)',
   },
   {
-    label: 'Lookalike domain',
+    label: 'Broken RC4 stream cipher active',
     severity: 'critical',
-    detail: 'micros0ft-support.example uses homoglyph "0" (zero) in place of "o" in "microsoft"',
+    detail: 'TLS_RSA_WITH_RC4_128_SHA selected — RC4 is cryptographically broken and banned in RFC 7465',
   },
   {
-    label: 'SPF/DKIM/DMARC failure',
+    label: 'Expired self-signed certificate',
     severity: 'critical',
-    detail: 'All three authentication checks failed — sender is not authorized by domain',
+    detail: 'Server certificate expired 2024-01-01, issued by unknown CA — no chain of trust, MITM trivially possible',
   },
   {
-    label: 'Suspicious URL',
+    label: 'RSA-1024 weak public key',
     severity: 'high',
-    detail: 'Link points to newly observed domain (registered 3 days ago) on hosting known for abuse',
+    detail: 'Certificate uses 1024-bit RSA key — below NIST minimum of 2048 bits; factorable with modern compute',
   },
   {
-    label: 'Social engineering',
+    label: 'No forward secrecy (non-ephemeral RSA)',
     severity: 'high',
-    detail: 'Urgency cues ("24 hours", "service suspension") and financial pressure tactics detected',
+    detail: 'RSA key exchange without ephemeral variant — past sessions can be decrypted if private key is ever compromised',
   },
 ];
 
 export const OBSERVED_FACTS: ObservedFact[] = [
   {
     id: 'F1',
-    category: 'Domain',
-    field: 'From domain',
-    value: 'micros0ft-support.example',
-    status: 'warn',
+    category: 'TLS Protocol',
+    field: 'Negotiated Version',
+    value: 'TLS 1.0 (Deprecated)',
+    status: 'fail',
   },
   {
     id: 'F2',
-    category: 'Domain',
-    field: 'Expected org domain',
-    value: 'microsoft.com',
+    category: 'TLS Protocol',
+    field: 'STARTTLS Observed',
+    value: 'Yes — SMTP STARTTLS negotiation detected on port 25',
     status: 'info',
   },
   {
     id: 'F3',
-    category: 'Domain',
-    field: 'Domain age',
-    value: '3 days (registered 2026-08-22)',
-    status: 'warn',
+    category: 'Cipher Suite',
+    field: 'Negotiated Cipher',
+    value: 'TLS_RSA_WITH_RC4_128_SHA (Broken)',
+    status: 'fail',
   },
   {
     id: 'F4',
-    category: 'Authentication',
-    field: 'SPF',
-    value: 'FAIL',
+    category: 'Cipher Suite',
+    field: 'Key Exchange',
+    value: 'RSA (No Forward Secrecy)',
     status: 'fail',
   },
   {
     id: 'F5',
-    category: 'Authentication',
-    field: 'DKIM',
-    value: 'FAIL',
+    category: 'Cipher Suite',
+    field: 'Encryption',
+    value: 'RC4-128 (Broken stream cipher)',
     status: 'fail',
   },
   {
     id: 'F6',
-    category: 'Authentication',
-    field: 'DMARC',
-    value: 'FAIL',
-    status: 'fail',
-  },
-  {
-    id: 'F7',
-    category: 'Headers',
-    field: 'Reply-To',
-    value: 'secure-verification.example',
+    category: 'Cipher Suite',
+    field: 'MAC',
+    value: 'SHA-1 (Weak HMAC)',
     status: 'warn',
   },
   {
+    id: 'F7',
+    category: 'Certificate',
+    field: 'Issuer',
+    value: 'Self-Signed (Unknown CA)',
+    status: 'fail',
+  },
+  {
     id: 'F8',
-    category: 'Headers',
-    field: 'Reply-To vs From',
-    value: 'Mismatch — Reply-To differs from From domain',
+    category: 'Certificate',
+    field: 'Expiry',
+    value: '2024-01-01 (Expired 236 days ago)',
     status: 'fail',
   },
   {
     id: 'F9',
-    category: 'URLs',
-    field: 'Embedded URL',
-    value: 'https://micros0ft-support.example/verify?id=PX9471',
-    status: 'warn',
+    category: 'Certificate',
+    field: 'Public Key',
+    value: 'RSA-1024 (Below NIST minimum 2048)',
+    status: 'fail',
   },
   {
     id: 'F10',
-    category: 'URLs',
-    field: 'URL domain age',
-    value: 'Newly observed (3 days)',
+    category: 'Certificate',
+    field: 'Subject',
+    value: 'mail.attacker-relay.example (Suspicious hostname)',
     status: 'warn',
   },
   {
     id: 'F11',
-    category: 'URLs',
-    field: 'URL hosting reputation',
-    value: 'Bulletproof hosting — high abuse rate',
+    category: 'Infrastructure',
+    field: 'Source IP',
+    value: '185.220.101.47 (Bulletproof hosting)',
     status: 'fail',
   },
   {
     id: 'F12',
     category: 'Infrastructure',
-    field: 'Sending IP',
-    value: '185.220.101.47',
-    status: 'warn',
+    field: 'Destination IP',
+    value: '10.14.22.5 (acme-mailgw-03.acme-corp.example)',
+    status: 'info',
   },
   {
     id: 'F13',
     category: 'Infrastructure',
-    field: 'IP reputation',
-    value: 'Listed on 4 blocklists (Spamhaus XBL, SORBS, UCEPROTECT L2, Barracuda)',
-    status: 'fail',
-  },
-  {
-    id: 'F14',
-    category: 'Content',
-    field: 'Language sentiment',
-    value: 'High urgency / financial pressure',
+    field: 'Protocol',
+    value: 'SMTP (port 25) — Plaintext channel susceptible to MITM',
     status: 'warn',
   },
   {
+    id: 'F14',
+    category: 'Attack Vectors',
+    field: 'POODLE Vulnerability',
+    value: 'Confirmed — SSLv3/TLS 1.0 + CBC padding oracle possible',
+    status: 'fail',
+  },
+  {
     id: 'F15',
-    category: 'Content',
-    field: 'X-Mailer',
-    value: 'PHPMailer 6.5 / custom-build',
-    status: 'info',
+    category: 'Attack Vectors',
+    field: 'BEAST Vulnerability',
+    value: 'Confirmed — TLS 1.0 + CBC mode IV predictability',
+    status: 'fail',
   },
 ];
 
 export const AI_INFERENCES: AIInference[] = [
   {
     id: 'I1',
-    inference: 'Likely business email compromise (BEC) targeting CFO for financial fraud',
+    inference: 'Active TLS downgrade attack — adversary forced negotiation to deprecated TLS 1.0',
     confidence: 94.7,
-    basis: 'Impersonation of Microsoft billing, financial urgency cues, credential harvest link',
+    basis: 'ClientHello offered modern suites but server selected TLS 1.0/RC4; indicative of active MITM interception',
   },
   {
     id: 'I2',
-    inference: 'Possible executive impersonation — sender mimics legitimate vendor billing',
+    inference: 'SMTP session at high risk of POODLE/BEAST exploitation due to CBC mode under TLS 1.0',
     confidence: 88.2,
-    basis: 'Display name "Microsoft Billing", lookalike domain, payment-themed subject',
+    basis: 'TLS 1.0 + CBC cipher combo; known CBC padding oracle attack surface confirmed',
   },
   {
     id: 'I3',
-    inference: 'Credential harvesting intent suspected via verification portal link',
+    inference: 'Certificate chain unverifiable — self-signed RSA-1024 from unknown issuer enables trivial MITM',
     confidence: 91.3,
-    basis: 'Reply-To redirect, newly registered link domain, "verify your account" language',
+    basis: 'Expired self-signed cert, 1024-bit RSA, no OCSP/CRL stapling, no chain of trust presented',
   },
   {
     id: 'I4',
-    inference: 'Sender infrastructure consistent with known BEC campaign cluster "WIRE-FAUD-247"',
+    inference: 'Infrastructure consistent with known MitM proxy cluster used in STARTTLS stripping campaigns',
     confidence: 72.5,
-    basis: 'IP blocklist overlap, PHPMailer signature, domain naming pattern match',
+    basis: 'Source IP 185.220.101.47 on bulletproof hosting; TLS downgrade pattern matches cluster TLSDOWN-019',
   },
 ];
 
 export const ANALYSIS_STAGES = [
-  'Email',
-  'Detect',
-  'Explain',
-  'Trace',
-  'Correlate',
-  'Investigate',
-  'Preserve',
-  'Report',
+  'Reconstructing TCP Streams',
+  'Detecting STARTTLS Negotiations',
+  'Parsing TLS Handshakes',
+  'Validating X.509 Certificates',
+  'Scoring Cipher Suites',
+  'Correlating Sessions',
+  'Preserving Evidence',
+  'Generating Report',
 ] as const;
 
 export type AnalysisStage = (typeof ANALYSIS_STAGES)[number];
 
-// ─── Phase 2: Header Forensics ──────────────────────────────────────────────
+// ─── Phase 2: Crypto Forensics (TLS Relay Hops / Session Hops) ──────────────
 
 export interface SmtpRelayHop {
   id: string;
@@ -420,54 +505,66 @@ export interface SmtpRelayHop {
   asnOrg: string;
   confidence: number;
   note: string;
+  tlsVersion?: string;
+  cipherSuite?: string;
 }
 
 export const SMTP_RELAYS: SmtpRelayHop[] = [
   {
-    id: 'R1', hop: 1, ip: '185.220.101.47', hostname: 'mail-micros0ft-support.example',
+    id: 'R1', hop: 1, ip: '185.220.101.47', hostname: 'mail-attacker-relay.example',
     timestamp: '2026-08-25 14:31:48 UTC', country: 'Romania', countryCode: 'RO',
     asn: 'AS200651', asnOrg: 'FlokiNET Ltd (synthetic)', confidence: 82,
-    note: 'Originating mail server — bulletproof hosting provider',
+    note: 'Session origin — TLS 1.0/RC4 downgrade initiated here; bulletproof hosting',
+    tlsVersion: 'TLS 1.0', cipherSuite: 'TLS_RSA_WITH_RC4_128_SHA',
   },
   {
-    id: 'R2', hop: 2, ip: '45.137.21.88', hostname: 'relay-01.flokinet-redirect.example',
+    id: 'R2', hop: 2, ip: '45.137.21.88', hostname: 'mitm-proxy-01.flokinet-redirect.example',
     timestamp: '2026-08-25 14:31:50 UTC', country: 'Iceland', countryCode: 'IS',
     asn: 'AS20495', asnOrg: 'ThorDatacenter (synthetic)', confidence: 71,
-    note: 'Intermediate relay — known proxy/redirect service',
+    note: 'MitM proxy node — STARTTLS stripping observed; re-encrypted with weak cipher',
+    tlsVersion: 'TLS 1.0', cipherSuite: 'TLS_RSA_WITH_RC4_128_SHA',
   },
   {
     id: 'R3', hop: 3, ip: '91.243.59.12', hostname: 'gw-acme-edge-02.acme-corp.example',
     timestamp: '2026-08-25 14:31:52 UTC', country: 'United States', countryCode: 'US',
     asn: 'AS40023', asnOrg: 'Acme Corp Networks (synthetic)', confidence: 99,
-    note: 'Recipient edge gateway — legitimate corporate infrastructure',
+    note: 'Recipient corporate edge gateway — accepted TLS 1.0 session without policy enforcement',
+    tlsVersion: 'TLS 1.0', cipherSuite: 'TLS_RSA_WITH_RC4_128_SHA',
   },
   {
     id: 'R4', hop: 4, ip: '10.14.22.5', hostname: 'acme-mailgw-03.acme-corp.example',
     timestamp: '2026-08-25 14:31:53 UTC', country: 'United States', countryCode: 'US',
     asn: 'Internal', asnOrg: 'Acme Corp Internal (synthetic)', confidence: 100,
-    note: 'Internal mail gateway — final delivery to recipient mailbox',
+    note: 'Internal mail gateway — final SMTP delivery endpoint; no TLS version upgrade enforced',
+    tlsVersion: 'TLS 1.0', cipherSuite: 'TLS_RSA_WITH_RC4_128_SHA',
   },
 ];
 
+
+// TLS extended parameters (replaces EXTENDED_HEADERS for Crypto Forensics page)
 export interface ExtendedHeader {
   key: string;
   value: string;
-  category: 'routing' | 'auth' | 'identity' | 'content' | 'metadata';
+  category: 'handshake' | 'cipher' | 'certificate' | 'transport' | 'vulnerability';
 }
 
 export const EXTENDED_HEADERS: ExtendedHeader[] = [
-  { key: 'From', value: 'finance@micros0ft-support.example', category: 'identity' },
-  { key: 'Reply-To', value: 'secure-verification@example', category: 'identity' },
-  { key: 'Return-Path', value: '<finance@micros0ft-support.example>', category: 'routing' },
-  { key: 'Message-ID', value: '<a7f2c8e1@mail-micros0ft-support.example>', category: 'metadata' },
-  { key: 'Received (1)', value: 'from mail-micros0ft-support.example (185.220.101.47) by acme-mailgw-03.example with ESMTP; Mon, 25 Aug 2026 14:31:53 +0000', category: 'routing' },
-  { key: 'Received (2)', value: 'from localhost (localhost [127.0.0.1]) by mail-micros0ft-support.example with PHPMailer; Mon, 25 Aug 2026 14:31:48 +0000', category: 'routing' },
-  { key: 'Authentication-Results', value: 'acme-mailgw-03.example; spf=fail (micros0ft-support.example: domain not authorized); dkim=fail (no valid signature); dmarc=fail (policy reject not enforced)', category: 'auth' },
-  { key: 'Received-SPF', value: 'Fail (micros0ft-support.example: domain of finance@micros0ft-support.example does not designate 185.220.101.47 as permitted sender)', category: 'auth' },
-  { key: 'DKIM-Signature', value: 'v=1; a=rsa-sha256; c=relaxed/relaxed; d=micros0ft-support.example; s=default; t=1724591508; bh=...; b=...', category: 'auth' },
-  { key: 'MIME-Version', value: '1.0', category: 'content' },
-  { key: 'Content-Type', value: 'text/plain; charset=UTF-8; format=flowed', category: 'content' },
-  { key: 'User-Agent', value: 'PHPMailer 6.5 / custom-build (Acme-Notify)', category: 'metadata' },
+  { key: 'TLS Version Negotiated', value: 'TLS 1.0 (deprecated — RFC 8996)', category: 'handshake' },
+  { key: 'ClientHello Supported Versions', value: 'TLS 1.0, TLS 1.1, TLS 1.2 (TLS 1.3 not proposed)', category: 'handshake' },
+  { key: 'ServerHello Selected Cipher', value: 'TLS_RSA_WITH_RC4_128_SHA', category: 'cipher' },
+  { key: 'Key Exchange Algorithm', value: 'RSA (Static — no forward secrecy)', category: 'cipher' },
+  { key: 'Encryption Algorithm', value: 'RC4-128 (broken stream cipher — RFC 7465 prohibited)', category: 'cipher' },
+  { key: 'MAC Algorithm', value: 'SHA-1 (weak — collision resistance compromised)', category: 'cipher' },
+  { key: 'Certificate Subject', value: 'mail.attacker-relay.example', category: 'certificate' },
+  { key: 'Certificate Issuer', value: 'Self-Signed (no trusted CA chain)', category: 'certificate' },
+  { key: 'Certificate Valid From', value: '2022-01-01', category: 'certificate' },
+  { key: 'Certificate Valid Until', value: '2024-01-01 (EXPIRED)', category: 'certificate' },
+  { key: 'Public Key Algorithm', value: 'RSA-1024 (below NIST SP 800-131A minimum of 2048)', category: 'certificate' },
+  { key: 'OCSP Stapling', value: 'Not present — revocation status unverifiable', category: 'certificate' },
+  { key: 'SMTP Protocol', value: 'Port 25 STARTTLS — opportunistic encryption only', category: 'transport' },
+  { key: 'TCP Stream', value: 'Stream 0x4A — reconstructed from 14 packets', category: 'transport' },
+  { key: 'POODLE (CVE-2014-3566)', value: 'VULNERABLE — TLS 1.0 + CBC padding oracle', category: 'vulnerability' },
+  { key: 'BEAST (CVE-2011-3389)', value: 'VULNERABLE — TLS 1.0 + CBC IV predictability', category: 'vulnerability' },
 ];
 
 export interface HeaderFact {
@@ -478,11 +575,11 @@ export interface HeaderFact {
 }
 
 export const HEADER_FACTS: HeaderFact[] = [
-  { id: 'HF1', fact: 'From and Reply-To domains differ', status: 'fail', detail: 'From: micros0ft-support.example vs Reply-To: secure-verification.example — reply traffic redirected to unrelated domain' },
-  { id: 'HF2', fact: 'SPF failed', status: 'fail', detail: 'Sending IP 185.220.101.47 not authorized by micros0ft-support.example SPF record' },
-  { id: 'HF3', fact: 'DKIM failed', status: 'fail', detail: 'No valid DKIM signature found — signature present but verification returned permerror' },
-  { id: 'HF4', fact: 'DMARC failed', status: 'fail', detail: 'DMARC alignment check failed — neither SPF nor DKIM aligned with header From domain' },
-  { id: 'HF5', fact: 'Suspicious relay behavior', status: 'warn', detail: 'Originating server injected via localhost [127.0.0.1] — indicates scripted/automated sending, not a legitimate MTA' },
+  { id: 'HF1', fact: 'TLS 1.0 negotiated — deprecated protocol active', status: 'fail', detail: 'Both client and server completed TLS 1.0 handshake; RFC 8996 mandates TLS 1.2 minimum. Exposes session to BEAST and POODLE.' },
+  { id: 'HF2', fact: 'RC4 stream cipher selected — cryptographically broken', status: 'fail', detail: 'TLS_RSA_WITH_RC4_128_SHA violates RFC 7465 which prohibits RC4 in all TLS versions; session confidentiality not guaranteed.' },
+  { id: 'HF3', fact: 'Self-signed certificate from unknown CA', status: 'fail', detail: 'No verifiable certificate chain — any MITM attacker can present forged certificate without detection by standard clients.' },
+  { id: 'HF4', fact: 'Certificate expired 236 days before session', status: 'fail', detail: 'Certificate expiry 2024-01-01 predates PCAP session date (2026-08-25) by over two years; indicates deliberate use of expired cert.' },
+  { id: 'HF5', fact: 'RSA-1024 public key below NIST minimum', status: 'warn', detail: 'NIST SP 800-131A requires minimum 2048-bit RSA. 1024-bit keys are considered factorable with nation-state resources.' },
 ];
 
 export interface HeaderInference {
@@ -493,12 +590,153 @@ export interface HeaderInference {
 }
 
 export const HEADER_INFERENCES: HeaderInference[] = [
-  { id: 'HI1', inference: 'Possible sender impersonation — sender mimics Microsoft billing to exploit trust', confidence: 89.3, basis: 'Lookalike domain with homoglyph, Microsoft-themed display name, payment-themed subject' },
-  { id: 'HI2', inference: 'Possible BEC infrastructure — relay chain consistent with known BEC campaign patterns', confidence: 76.8, basis: 'Bulletproof hosting origin, localhost injection, PHPMailer signature matching cluster WIRE-FAUD-247' },
-  { id: 'HI3', inference: 'Possible credential-harvesting intent — Reply-To redirect to verification domain', confidence: 84.1, basis: 'Reply-To mismatch, "verify your account" language, URL on newly registered domain' },
+  { id: 'HI1', inference: 'Active STARTTLS stripping — adversary intercepted SMTP session before TLS negotiation', confidence: 89.3, basis: 'Hop 2 (mitm-proxy-01) exhibits pattern consistent with STARTTLS stripping; cipher downgrade occurred at that node' },
+  { id: 'HI2', inference: 'Man-in-the-Middle proxy confirmed — relay chain suggests interception layer at AS20495', confidence: 76.8, basis: 'Bulletproof hosting origin, repeated RC4 across hops, no certificate chain validation enforced at recipient' },
+  { id: 'HI3', inference: 'Session data at risk of historical decryption if RC4 key stream recovered via statistical analysis', confidence: 84.1, basis: 'RC4 key reuse patterns; session duration and payload size consistent with known RC4 recovery attack corpus' },
 ];
 
-// ─── Phase 3: Threat Intelligence ───────────────────────────────────────────
+
+// ─── Phase 3: Certificate Vault (replaces Threat Intelligence) ───────────────
+
+// X.509 Certificate vault entries
+export interface X509Certificate {
+  id: string;
+  subject: string;
+  issuer: string;
+  serialNumber: string;
+  validFrom: string;
+  validUntil: string;
+  keyAlgo: string;
+  keyLength: number;
+  signatureAlgo: string;
+  fingerprint: string;
+  selfSigned: boolean;
+  expired: boolean;
+  weakKey: boolean;
+  sessionId: string;
+  tlsVersion: string;
+  riskScore: number;
+  severity: Severity;
+}
+
+export const X509_CERTIFICATES: X509Certificate[] = [
+  {
+    id: 'CERT-2026-001',
+    subject: 'mail.attacker-relay.example',
+    issuer: 'Self-Signed (Unknown CA)',
+    serialNumber: '0x4E2A1F9C',
+    validFrom: '2022-01-01',
+    validUntil: '2024-01-01',
+    keyAlgo: 'RSA',
+    keyLength: 1024,
+    signatureAlgo: 'SHA1withRSA',
+    fingerprint: 'A3:F5:B8:C9:D2:E1:F4:A7:B6:C8:D5:E2:F1:A4:B7:C9',
+    selfSigned: true,
+    expired: true,
+    weakKey: true,
+    sessionId: 'NS-2026-0892',
+    tlsVersion: 'TLS 1.0',
+    riskScore: 98,
+    severity: 'critical',
+  },
+  {
+    id: 'CERT-2026-002',
+    subject: 'mail.paypa1-secure.example',
+    issuer: "Let's Encrypt Authority X3",
+    serialNumber: '0x7C3B2E8A',
+    validFrom: '2024-09-15',
+    validUntil: '2025-03-15',
+    keyAlgo: 'RSA',
+    keyLength: 2048,
+    signatureAlgo: 'SHA256withRSA',
+    fingerprint: 'B4:C6:D7:E8:F9:A0:B1:C2:D3:E4:F5:A6:B7:C8:D9:E0',
+    selfSigned: false,
+    expired: false,
+    weakKey: false,
+    sessionId: 'NS-2026-0891',
+    tlsVersion: 'TLS 1.1',
+    riskScore: 64,
+    severity: 'medium',
+  },
+  {
+    id: 'CERT-2026-003',
+    subject: 'mail.vendor-portal.example',
+    issuer: 'DigiCert TLS RSA SHA256 2020 CA1',
+    serialNumber: '0x1A9E4C72',
+    validFrom: '2026-06-01',
+    validUntil: '2027-06-01',
+    keyAlgo: 'RSA',
+    keyLength: 4096,
+    signatureAlgo: 'SHA256withRSA',
+    fingerprint: 'C5:D7:E8:F9:A0:B1:C2:D3:E4:F5:A6:B7:C8:D9:E0:F1',
+    selfSigned: false,
+    expired: false,
+    weakKey: false,
+    sessionId: 'NS-2026-0890',
+    tlsVersion: 'TLS 1.2',
+    riskScore: 18,
+    severity: 'low',
+  },
+  {
+    id: 'CERT-2026-004',
+    subject: 'mail.acme-relay.example',
+    issuer: 'Self-Signed (Unknown CA)',
+    serialNumber: '0x9F2D6B41',
+    validFrom: '2020-06-01',
+    validUntil: '2023-12-31',
+    keyAlgo: 'RSA',
+    keyLength: 512,
+    signatureAlgo: 'SHA1withRSA',
+    fingerprint: 'D6:E8:F9:A0:B1:C2:D3:E4:F5:A6:B7:C8:D9:E0:F1:A2',
+    selfSigned: true,
+    expired: true,
+    weakKey: true,
+    sessionId: 'NS-2026-0889',
+    tlsVersion: 'SSLv3',
+    riskScore: 99,
+    severity: 'critical',
+  },
+  {
+    id: 'CERT-2026-005',
+    subject: 'imap.acme-payroll.example',
+    issuer: 'Self-Signed (Internal IT)',
+    serialNumber: '0x3C7F1E29',
+    validFrom: '2024-01-15',
+    validUntil: '2025-01-15',
+    keyAlgo: 'RSA',
+    keyLength: 1024,
+    signatureAlgo: 'SHA256withRSA',
+    fingerprint: 'E7:F9:A0:B1:C2:D3:E4:F5:A6:B7:C8:D9:E0:F1:A2:B3',
+    selfSigned: true,
+    expired: false,
+    weakKey: true,
+    sessionId: 'NS-2026-0887',
+    tlsVersion: 'TLS 1.3',
+    riskScore: 72,
+    severity: 'high',
+  },
+];
+
+// Top Vulnerable Cipher Suites (replaces Top Malicious Domains)
+export interface VulnerableCipherSuite {
+  rank: number;
+  cipherSuite: string;
+  sessionCount: number;
+  vulnerability: string;
+  severity: Severity;
+  rfc: string;
+}
+
+export const TOP_VULNERABLE_CIPHERS: VulnerableCipherSuite[] = [
+  { rank: 1, cipherSuite: 'TLS_RSA_WITH_RC4_128_SHA', sessionCount: 47, vulnerability: 'RC4 broken stream cipher (RFC 7465)', severity: 'critical', rfc: 'RFC 7465' },
+  { rank: 2, cipherSuite: 'TLS_RSA_WITH_DES_CBC_SHA', sessionCount: 31, vulnerability: 'DES 56-bit key — brute-forceable', severity: 'critical', rfc: 'NIST SP 800-131A' },
+  { rank: 3, cipherSuite: 'TLS_RSA_WITH_3DES_EDE_CBC_SHA', sessionCount: 28, vulnerability: 'SWEET32 birthday attack (CVE-2016-2183)', severity: 'high', rfc: 'RFC 7568' },
+  { rank: 4, cipherSuite: 'TLS_RSA_WITH_AES_128_CBC_SHA', sessionCount: 22, vulnerability: 'No forward secrecy + CBC padding oracle risk', severity: 'high', rfc: 'RFC 9325' },
+  { rank: 5, cipherSuite: 'TLS_RSA_WITH_AES_128_CBC_SHA256', sessionCount: 19, vulnerability: 'No forward secrecy; static RSA key exchange', severity: 'medium', rfc: 'RFC 9325' },
+];
+
+// ─── Legacy: IP/Domain Intelligence (retained for Session Mapping / Origin Investigation) ──
+
 
 export interface IPIntelligence {
   ip: string;
@@ -1426,27 +1664,28 @@ export interface AIQuestion {
 }
 
 export const AI_SUGGESTED_QUESTIONS: AIQuestion[] = [
-  { id: 'q1', question: 'Why is this suspicious?' },
+  { id: 'q1', question: 'Why is this session high risk?' },
   { id: 'q2', question: 'Summarize this case.' },
   { id: 'q3', question: 'What evidence supports the risk score?' },
-  { id: 'q4', question: 'Explain the header anomalies.' },
-  { id: 'q5', question: 'What indicators are connected?' },
-  { id: 'q6', question: 'Why is this considered BEC?' },
+  { id: 'q4', question: 'Explain the TLS handshake anomalies.' },
+  { id: 'q5', question: 'What cipher vulnerabilities are present?' },
+  { id: 'q6', question: 'Why is this classified as a downgrade attack?' },
 ];
 
 export const AI_RESPONSES: Record<string, string> = {
-  q1: 'This email is suspicious for several compounding reasons. First, the sender domain micros0ft-support.example uses a homoglyph attack — the letter "o" in "microsoft" is replaced with the digit "0" (zero), making it visually near-identical. Second, all three email authentication checks failed: SPF, DKIM, and DMARC — meaning the sender is not authorized by any domain. Third, the Reply-To address (secure-verification.example) differs from the From address, redirecting replies to an unrelated domain. Fourth, the embedded URL points to a domain registered only 3 days ago, hosted on bulletproof infrastructure (FlokiNET Ltd, AS200651). Finally, the sending IP 185.220.101.47 is listed on 4 blocklists. The combined risk score is 96/100.',
-  q2: 'Case CASE-2026-0471 involves a business email compromise (BEC) attempt targeting the CFO of Acme Corp. The email impersonated Microsoft billing with an urgent payment verification request. It originated from a lookalike domain (micros0ft-support.example) using a homoglyph attack. All authentication checks failed. A credential harvesting URL was embedded with a 3-hop redirect chain. The infrastructure is linked to campaign cluster WIRE-FAUD-247. The case is currently in "Investigating" status, assigned to Kaelen Richter. Two evidence items have been preserved with verified SHA-256 integrity.',
-  q3: 'The risk score of 96/100 is supported by five key risk factors: (1) Sender impersonation — the display name "Microsoft Billing" does not match the sender domain. (2) Lookalike domain — micros0ft-support.example uses a homoglyph with 92% similarity to microsoft.example. (3) SPF/DKIM/DMARC failure — all three authentication checks failed. (4) Suspicious URL — the embedded link points to a newly observed domain on bulletproof hosting. (5) Social engineering — urgency cues ("24 hours", "service suspension") and financial pressure tactics. Additionally, the sending IP is on 4 blocklists, and the domain was registered only 3 days before the email was sent.',
-  q4: 'The email headers reveal several critical anomalies. The Authentication-Results header shows SPF=fail, DKIM=fail, and DMARC=fail — none of the authentication checks passed. The Received headers show the email was injected from localhost [127.0.0.1] at the originating server, indicating scripted/automated sending rather than a legitimate mail transfer agent. The Reply-To header (secure-verification.example) differs from the From header (micros0ft-support.example), redirecting reply traffic to an unrelated domain. The X-Mailer header shows PHPMailer 6.5, which is commonly used in automated phishing tools. The Message-ID domain matches the spoofed sender domain, not a legitimate Microsoft domain.',
-  q5: 'The following indicators are connected in this investigation: IP 185.220.101.47 (sending infrastructure, 96% confidence), domain micros0ft-support.example (sender and URL domain, 98% confidence), domain secure-verification.example (Reply-To redirect, 91% confidence), URL https://micros0ft-support.example/verify?id=PX9471 (credential harvest link, 97% confidence), email finance@micros0ft-support.example (spoofed sender, 99% confidence), campaign WIRE-FAUD-247 (associated cluster, 72% confidence), IP 45.137.21.88 (intermediate relay, 68% confidence), and domain cred-harvest-flokinet.example (credential capture endpoint, 81% confidence). These form a chain from email through domain, IP, hosting, URL, to campaign.',
-  q6: 'This is classified as BEC (Business Email Compromise) based on several indicators. The email specifically targets the CFO — a high-value financial decision-maker. It impersonates Microsoft billing, a trusted vendor, using a lookalike domain with a homoglyph attack. The subject line ("Urgent: Payment Verification Required") uses financial urgency cues designed to pressure the recipient into acting quickly. The email requests payment verification — a common BEC tactic to initiate fraudulent wire transfers. The Reply-To redirect sends responses to a separate domain controlled by the attacker. The infrastructure (bulletproof hosting, blocklisted IP, PHPMailer injection) matches the pattern of known BEC campaign cluster WIRE-FAUD-247. The AI inference confidence for BEC classification is 94.7%.',
+  q1: 'This SMTP session is high risk for five compounding reasons. First, TLS 1.0 was negotiated — a deprecated protocol banned by RFC 8996 since March 2021. Second, the cipher suite TLS_RSA_WITH_RC4_128_SHA uses RC4, which is cryptographically broken and prohibited by RFC 7465. Third, the server presented a self-signed certificate from an unknown CA with no chain of trust, making MITM trivially possible. Fourth, the certificate expired on 2024-01-01 — over two years before the session date — indicating deliberate use of invalid credentials. Fifth, the public key is RSA-1024, below the NIST SP 800-131A minimum of 2048 bits. The combined cryptographic posture score is 4/100.',
+  q2: 'Case CASE-2026-0471 involves an active TLS downgrade attack on an SMTP session at Acme Corp. The attacker at 185.220.101.47 (FlokiNET bulletproof hosting) forced negotiation to TLS 1.0 with the broken RC4 cipher suite. A self-signed, expired RSA-1024 certificate was presented — enabling trivial MITM. The session infrastructure matches the TLSDOWN-019 campaign cluster. The case is currently in "Investigating" status, assigned to Kaelen Richter. Two evidence items have been preserved with verified SHA-256 integrity.',
+  q3: 'The risk score of 96/100 is supported by five critical factors: (1) Deprecated TLS 1.0 negotiated — BEAST and POODLE attack surface exposed. (2) RC4 cipher selected — broken stream cipher violates RFC 7465, session confidentiality not guaranteed. (3) Expired self-signed certificate — no chain of trust, certificate expired 236 days before session. (4) RSA-1024 public key — below NIST minimum 2048-bit, factorable with modern compute. (5) No forward secrecy — static RSA key exchange means past sessions can be decrypted if private key is compromised.',
+  q4: 'The TLS handshake reveals five critical anomalies. The ClientHello proposed only TLS 1.0/1.1/1.2 — TLS 1.3 was absent, which is unusual for modern clients. The ServerHello selected TLS 1.0 + RC4 — both deprecated — indicating either a misconfigured or deliberately weakened server. The Certificate exchange presented a self-signed cert (SHA1withRSA, RSA-1024) expired January 2024 — no OCSP stapling or CRL extension present. The ServerKeyExchange used static RSA without ephemeral keys — eliminating forward secrecy. The ChangeCipherSpec confirmed the downgrade to RC4, exposing the session to BEAST/POODLE attacks.',
+  q5: 'The session uses TLS_RSA_WITH_RC4_128_SHA — one of the most dangerous cipher suites. Key Exchange: RSA (static, no PFS). Encryption: RC4-128 (broken; RC4 biases enable plaintext recovery with sufficient ciphertext). MAC: SHA-1 (weak; collision resistance compromised). Attack surface includes: RC4 statistical bias (Fluhrer-Mantin-Shamir attack), BEAST via TLS 1.0 + CBC mode (CBC here is RC4, so BEAST does not apply, but POODLE-like padding attacks do), and session key recovery via RC4 invariance attacks. Recommended replacement: TLS 1.3 with TLS_AES_256_GCM_SHA384.',
+  q6: 'This is classified as a Downgrade Attack because the client offered higher TLS versions but the server forcibly selected TLS 1.0. In a legitimate session, a properly configured server would negotiate the highest mutually supported version. The source IP 185.220.101.47 is on bulletproof hosting known for MITM proxy infrastructure. The hop-2 node (mitm-proxy-01.flokinet-redirect.example) exhibits STARTTLS stripping behavior — intercepting the initial SMTP STARTTLS exchange and re-establishing a weaker TLS 1.0 session. This is consistent with the TLSDOWN-019 campaign cluster (72.5% confidence).',
 };
 
-// ─── Phase 8: Alerts ──────────────────────────────────────────────────────────
+
+// ─── Phase 8: Crypto Alerts ──────────────────────────────────────────────────
 
 export type AlertStatus = 'new' | 'acknowledged' | 'investigating' | 'resolved';
-export type AlertType = 'BEC Detection' | 'Lookalike Domain' | 'Authentication Failure' | 'Suspicious URL' | 'Campaign Correlation' | 'Origin Anomaly';
+export type AlertType = 'Downgrade Attack' | 'Weak Cipher' | 'Expired Certificate' | 'Weak Key' | 'MitM Detected' | 'STARTTLS Stripping' | 'Protocol Violation' | 'Self-Signed Certificate';
 
 export interface SecurityAlert {
   id: string;
@@ -1468,183 +1707,182 @@ export const SECURITY_ALERTS: SecurityAlert[] = [
   {
     id: 'ALR-2026-0892',
     severity: 'critical',
-    type: 'BEC Detection',
-    source: 'SENTINEL-X Detection Engine',
+    type: 'Downgrade Attack',
+    source: 'SENTINEL-X Crypto Engine',
     detected: '2026-08-25 14:32:11',
     status: 'investigating',
     relatedCase: 'CASE-2026-0471',
-    summary: 'Business email compromise detected targeting CFO. Lookalike domain with homoglyph, all authentication checks failed, credential harvesting URL embedded.',
+    summary: 'Active TLS downgrade attack detected on inbound SMTP session. Negotiation forced down to TLS 1.0 with prohibited cipher TLS_RSA_WITH_RC4_128_SHA.',
     observedFacts: [
-      'Sender domain micros0ft-support.example uses homoglyph (zero for "o")',
-      'SPF: FAIL, DKIM: FAIL, DMARC: FAIL',
-      'Reply-To differs from From domain',
-      'Risk score: 96/100',
+      'Client offered TLS 1.2 and TLS 1.3 in ClientHello',
+      'Server forced downgrade to deprecated TLS 1.0 (RFC 8996 violation)',
+      'Negotiated cipher: TLS_RSA_WITH_RC4_128_SHA (RFC 7465 violation)',
+      'Cryptographic posture score: 4/100',
     ],
-    aiInference: 'Likely BEC targeting CFO for financial fraud — 94.7% confidence. Credential harvesting intent suspected — 91.3% confidence.',
-    relatedIndicators: ['185.220.101.47', 'micros0ft-support.example', 'https://micros0ft-support.example/verify?id=PX9471'],
-    relatedCampaign: 'WIRE-FAUD-247',
-    recommendedAction: 'Block sending IP at gateway, notify CFO, preserve evidence, open investigation case.',
+    aiInference: 'Adversary-controlled MITM proxy active in transit path — 94.7% confidence. Forced downgrade enables plaintext inspection.',
+    relatedIndicators: ['185.220.101.47', 'mail.attacker-relay.example', 'TLS_RSA_WITH_RC4_128_SHA'],
+    relatedCampaign: 'TLSDOWN-019',
+    recommendedAction: 'Enforce MTA-STS policy to reject TLS < 1.2, quarantine incoming session, inspect intermediate routing nodes.',
   },
   {
     id: 'ALR-2026-0891',
-    severity: 'high',
-    type: 'Lookalike Domain',
-    source: 'Domain Monitoring Service',
+    severity: 'critical',
+    type: 'Expired Certificate',
+    source: 'Certificate Posture Monitor',
     detected: '2026-08-25 13:18:44',
     status: 'acknowledged',
     relatedCase: 'CASE-2026-0468',
-    summary: 'Lookalike domain paypa1-secure.example detected impersonating PayPal. Domain registered 6 days ago with privacy registrar.',
+    summary: 'Server presented an expired digital certificate during IMAP over TLS session. Certificate expired over 200 days ago.',
     observedFacts: [
-      'Domain paypa1-secure.example uses homoglyph (digit 1 for letter l)',
-      'Registration age: 6 days',
-      'Privacy registrar: Njalla AB',
-      'No DMARC record published',
+      'Certificate subject: CN=legacy-mail.partner-network.example',
+      'Valid until: 2024-01-01 (Expired 236 days overdue)',
+      'Chain validation: Certificate expired / revoked check failed',
+      'Key length: RSA-1024',
     ],
-    aiInference: 'Possible credential harvesting domain mimicking PayPal — 85% confidence. Related to WIRE-FAUD-247 campaign cluster.',
-    relatedIndicators: ['paypa1-secure.example', '203.0.113.91'],
-    relatedCampaign: 'WIRE-FAUD-247',
-    recommendedAction: 'Add domain to denylist, monitor for phishing emails, alert billing department.',
+    aiInference: 'Lax certificate lifecycle management or rogue certificate reuse — 88% confidence.',
+    relatedIndicators: ['legacy-mail.partner-network.example', '203.0.113.91'],
+    relatedCampaign: 'WEAKCERT-007',
+    recommendedAction: 'Reject non-compliant connections, alert partner organization, revoke unpinned certs.',
   },
   {
     id: 'ALR-2026-0890',
     severity: 'high',
-    type: 'Authentication Failure',
-    source: 'Mail Gateway (acme-mailgw-03)',
+    type: 'Weak Cipher',
+    source: 'Crypto Audit Daemon (acme-mailgw-03)',
     detected: '2026-08-25 14:31:53',
     status: 'investigating',
     relatedCase: 'CASE-2026-0471',
-    summary: 'Email received with all authentication checks failing (SPF/DKIM/DMARC). Sender IP 185.220.101.47 not authorized by micros0ft-support.example.',
+    summary: 'POP3S session negotiated with 3DES-EDE-CBC cipher suite vulnerable to Sweet32 64-bit block collision attack.',
     observedFacts: [
-      'SPF: FAIL — IP not in domain SPF record',
-      'DKIM: FAIL — signature permerror',
-      'DMARC: FAIL — no alignment',
-      'Sending IP: 185.220.101.47',
+      'Negotiated cipher: TLS_RSA_WITH_3DES_EDE_CBC_SHA',
+      '64-bit block size vulnerable to birthday attack (Sweet32 / CVE-2016-2183)',
+      'No Forward Secrecy: Static RSA key exchange',
+      'Client IP: 185.220.101.47',
     ],
-    aiInference: 'Authentication failure pattern consistent with spoofed sender — 92% confidence. Infrastructure matches known BEC campaign.',
-    relatedIndicators: ['185.220.101.47', 'micros0ft-support.example'],
-    relatedCampaign: 'WIRE-FAUD-247',
-    recommendedAction: 'Quarantine email, block sender IP, investigate for BEC indicators.',
+    aiInference: 'Vulnerable cipher usage exposes session cookies and authentication tokens to statistical decryption.',
+    relatedIndicators: ['185.220.101.47', 'TLS_RSA_WITH_3DES_EDE_CBC_SHA'],
+    relatedCampaign: 'SWEET32-CLUSTER',
+    recommendedAction: 'Disable 3DES cipher suites across all POP3/IMAP endpoints; require AES-GCM or CHACHA20-POLY1305.',
   },
   {
     id: 'ALR-2026-0889',
     severity: 'critical',
-    type: 'Suspicious URL',
-    source: 'URL Scanner',
+    type: 'STARTTLS Stripping',
+    source: 'SMTP Protocol Inspector',
     detected: '2026-08-25 14:32:00',
     status: 'investigating',
     relatedCase: 'CASE-2026-0471',
-    summary: 'Suspicious URL detected in email body. Multi-hop redirect chain leading to credential capture page on bulletproof hosting.',
+    summary: 'STARTTLS command stripped from SMTP EHLO capability response by upstream network node, forcing cleartext transmission.',
     observedFacts: [
-      'URL: https://micros0ft-support.example/verify?id=PX9471',
-      'Domain registered 3 days ago',
-      '3-hop redirect chain to capture page',
-      'Final hop: cred-harvest-flokinet.example',
-      'Self-signed TLS certificate on final hop',
+      'Original mail server advertised 250-STARTTLS in initial response',
+      'Upstream hop 185.220.101.47 filtered STARTTLS capability token',
+      'Client forced to transmit authentication and email payload in cleartext',
+      'Traffic captured on Port 25',
     ],
-    aiInference: 'Credential harvesting URL with redirect obfuscation — 94% confidence. Page mimics Microsoft account login.',
-    relatedIndicators: ['https://micros0ft-support.example/verify?id=PX9471', 'cred-harvest-flokinet.example'],
-    relatedCampaign: 'WIRE-FAUD-247',
-    recommendedAction: 'Block URL at web gateway, check if any users accessed the link, preserve URL evidence.',
+    aiInference: 'Active Man-in-the-Middle (MitM) adversary executing network-level STARTTLS stripping — 96% confidence.',
+    relatedIndicators: ['185.220.101.47', 'mitm-proxy-01.flokinet-redirect.example'],
+    relatedCampaign: 'TLSDOWN-019',
+    recommendedAction: 'Mandate DANE (RFC 7672) and MTA-STS (RFC 8461) enforcement to prevent unencrypted failover.',
   },
   {
     id: 'ALR-2026-0888',
     severity: 'high',
-    type: 'Campaign Correlation',
-    source: 'Threat Intelligence Correlation',
+    type: 'Self-Signed Certificate',
+    source: 'PKI Trust Validator',
     detected: '2026-08-25 14:51:00',
     status: 'investigating',
     relatedCase: 'CASE-2026-0471',
-    summary: 'Email indicators matched to known campaign cluster WIRE-FAUD-247. IP, domain, and PHPMailer signature overlap with 4 prior BEC campaigns.',
+    summary: 'Self-signed digital certificate presented with no valid chain of trust to any public or internal Root CA.',
     observedFacts: [
-      'IP 185.220.101.47 appears in 4 prior campaign IOCs',
-      'PHPMailer 6.5 signature matches campaign pattern',
-      'Domain naming convention matches cluster',
-      'Campaign first seen: 2026-08-15',
+      'Issuer: CN=Untrusted Self-Signed CA, O=Anonymous',
+      'Subject: CN=mail.attacker-relay.example',
+      'Authority Key Identifier missing',
+      'Signature algorithm: SHA1withRSA (deprecated collision-vulnerable hash)',
     ],
-    aiInference: 'Sender infrastructure consistent with WIRE-FAUD-247 campaign — 72.5% confidence. Active campaign with 47 related indicators.',
-    relatedIndicators: ['WIRE-FAUD-247', '185.220.101.47', 'micros0ft-support.example'],
-    relatedCampaign: 'WIRE-FAUD-247',
-    recommendedAction: 'Review all campaign IOCs, cross-reference with other open cases, update campaign timeline.',
+    aiInference: 'Untrusted certificate exchange strongly indicates unauthorized interception proxy or adversary gateway — 91% confidence.',
+    relatedIndicators: ['mail.attacker-relay.example', '185.220.101.47'],
+    relatedCampaign: 'TLSDOWN-019',
+    recommendedAction: 'Enforce strict certificate verification; terminate TCP session on untrusted CA.',
   },
   {
     id: 'ALR-2026-0887',
     severity: 'medium',
-    type: 'Origin Anomaly',
-    source: 'Origin Investigation Module',
+    type: 'Weak Key',
+    source: 'Cryptographic Posture Scanner',
     detected: '2026-08-25 15:02:00',
     status: 'acknowledged',
     relatedCase: 'CASE-2026-0471',
-    summary: 'Probable source infrastructure identified in Mumbai, India (AS55836 — Reliance Jio Infocomm). High-velocity routing infrastructure.',
+    summary: 'Mail gateway accepted an inbound TLS connection utilizing an RSA-1024 bit server key, below NIST SP 800-131A standards.',
     observedFacts: [
-      'SMTP relay origin: 103.19.199.18',
-      'Geolocation: Mumbai, India',
-      'ASN: AS55836 (Reliance Jio Infocomm)',
-      'Hosting classification: Cloud Gateway',
+      'Key algorithm: RSA',
+      'Key length: 1024 bits (NIST requires minimum 2048 bits)',
+      'Estimated factoring complexity within feasible academic cluster range',
+      'Protocol: IMAP over TLS (Port 993)',
     ],
-    aiInference: 'Probable source identified with 78% confidence. Note: geographic location is an inference, not proof of attacker location.',
+    aiInference: 'Sub-standard key strength violates security baseline policy; keys vulnerable to precomputation.',
     relatedIndicators: ['103.19.199.18', 'AS55836'],
-    relatedCampaign: 'WIRE-FAUD-247',
-    recommendedAction: 'Document origin inference in case, do not attribute to specific actor without further evidence.',
+    relatedCampaign: 'LEGACY-KEYS-04',
+    recommendedAction: 'Upgrade server certificate to RSA-3072 or ECDSA P-256; reconfigure cryptographic minimums.',
   },
   {
     id: 'ALR-2026-0886',
     severity: 'critical',
-    type: 'BEC Detection',
-    source: 'SENTINEL-X Detection Engine',
+    type: 'MitM Detected',
+    source: 'SENTINEL-X Crypto Engine',
     detected: '2026-08-25 11:47:09',
     status: 'resolved',
     relatedCase: 'CASE-2026-0462',
-    summary: 'Executive impersonation detected — CEO display name spoofed. Wire transfer request sent to finance. Blocked at gateway.',
+    summary: 'Active TCP session injection and forged TLS Certificate Exchange detected in transit between SMTP relays.',
     observedFacts: [
-      'Display name: "CEO" — spoofed',
-      'From domain differs from CEO actual domain',
-      'Wire transfer request language detected',
-      'DMARC enforcement blocked delivery',
+      'TCP sequence numbers out of order with forged SYN/ACK flags',
+      'Duplicate TLS ServerHello with mismatched server random parameters',
+      'Session key renegotiation aborted by gateway',
+      'Adversary IP isolated to autonomous system AS49505',
     ],
-    aiInference: 'Executive impersonation / CEO fraud attempt — 94% confidence. No financial loss occurred.',
+    aiInference: 'In-flight packet injection attempt detected and dropped at gateway — 94% confidence.',
     relatedIndicators: ['exec-spoof-relay.example', '203.0.113.55'],
-    relatedCampaign: 'EXEC-SPOOF-118',
-    recommendedAction: 'Notify finance team, verify no wire transfers processed, block sender IP.',
+    relatedCampaign: 'MITM-INJECT-01',
+    recommendedAction: 'Update edge firewall routing rules, verify IPsec tunnel integrity, confirm session drop.',
   },
   {
     id: 'ALR-2026-0885',
     severity: 'medium',
-    type: 'Authentication Failure',
-    source: 'Mail Gateway (acme-mailgw-03)',
+    type: 'Protocol Violation',
+    source: 'Network Protocol Analyzer',
     detected: '2026-08-25 10:33:51',
     status: 'resolved',
     relatedCase: 'CASE-2026-0455',
-    summary: 'Email with failed authentication contained .docm attachment. Trojan downloader detected and quarantined.',
+    summary: 'Mismatched TLS record layer version and ClientHello handshake version, indicating malformed or fuzzing probe.',
     observedFacts: [
-      'SPF: FAIL',
-      'Attachment: .docm file with macro',
-      'Trojan downloader signature detected',
-      'Attachment quarantined automatically',
+      'Record layer version: TLS 1.0 (0x0301)',
+      'Handshake message version: TLS 1.2 (0x0303)',
+      'Missing supported_versions extension in ClientHello',
+      'Session terminated by TCP RST',
     ],
-    aiInference: 'Malware distribution via package notification lure — 74% confidence. No execution on endpoint.',
-    relatedIndicators: ['dhl-express-notify.example', '198.51.100.77'],
-    relatedCampaign: 'PKG-NOTIFY-093',
-    recommendedAction: 'Quarantine completed, run endpoint scan, verify no execution occurred.',
+    aiInference: 'Automated TLS scanner or handshake fuzzing attempt probed mail server endpoints.',
+    relatedIndicators: ['198.51.100.77', 'scanner-probe.example'],
+    relatedCampaign: 'RECON-PROBES',
+    recommendedAction: 'Verify intrusion detection signature, block probe subnet if requests exceed threshold.',
   },
   {
     id: 'ALR-2026-0884',
     severity: 'low',
-    type: 'Lookalike Domain',
-    source: 'Domain Monitoring Service',
+    type: 'Weak Cipher',
+    source: 'Cryptographic Audit Daemon',
     detected: '2026-08-24 18:22:00',
     status: 'new',
     relatedCase: '',
-    summary: 'Newly registered domain acme-c0rp.example detected. Low similarity to acme-corp.example but uses homoglyph.',
+    summary: 'CBC-mode cipher suite negotiated without Encrypt-then-MAC extension; theoretical Lucky Thirteen timing risk.',
     observedFacts: [
-      'Domain: acme-c0rp.example',
-      'Registration: 2026-08-24',
-      'Homoglyph: digit 0 for letter o',
-      'No active emails observed yet',
+      'Cipher: TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384',
+      'Extension encrypt_then_mac: Not present',
+      'Protocol: TLS 1.2',
+      'No active exploitation observed',
     ],
-    aiInference: 'Potential future lookalike domain — 45% confidence. No malicious activity observed yet. Monitoring recommended.',
+    aiInference: 'CBC mode with MAC-then-Encrypt vulnerable to microsecond-level timing side channels — 45% confidence.',
     relatedIndicators: ['acme-c0rp.example'],
     relatedCampaign: '',
-    recommendedAction: 'Add to watchlist, monitor for phishing emails using this domain.',
+    recommendedAction: 'Prioritize AEAD ciphers (AES-GCM / CHACHA20) in cipher preference order list.',
   },
 ];
 

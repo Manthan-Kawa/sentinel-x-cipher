@@ -2,7 +2,7 @@ import {
   LayoutDashboard,
   MailSearch,
   FileSearch,
-  Globe2,
+  ShieldCheck,
   MapPin,
   Share2,
   Network,
@@ -13,7 +13,6 @@ import {
   ClipboardList,
   Inbox,
   Lock,
-  Mail,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -29,24 +28,24 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   // ── Analyst-only ──────────────────────────────────────────────────────────
-  { id: 'dashboard',           label: 'Dashboard',          icon: LayoutDashboard, roles: ['analyst'] },
-  { id: 'email-analyzer',      label: 'Email Analyzer',     icon: MailSearch,      roles: ['analyst'] },
-  { id: 'header-forensics',    label: 'Header Forensics',   icon: FileSearch,      roles: ['analyst'] },
-  { id: 'threat-intelligence', label: 'Threat Intelligence',icon: Globe2,          roles: ['analyst'] },
-  { id: 'origin-investigation',label: 'Origin Investigation',icon: MapPin,         roles: ['analyst'] },
-  { id: 'attack-graph',        label: 'Attack Graph',       icon: Share2,          roles: ['analyst'] },
-  { id: 'reports',             label: 'Reports',            icon: FileText,        roles: ['analyst'] },
-  { id: 'campaigns',           label: 'Campaigns',          icon: Network,         roles: ['analyst'] },
-  { id: 'alerts',              label: 'Alerts',             icon: Bell,            roles: ['analyst'] },
-  { id: 'user-requests',       label: 'User Requests',      icon: Inbox,           roles: ['analyst'] },
+  { id: 'dashboard',           label: 'Dashboard',           icon: LayoutDashboard, roles: ['analyst'] },
+  { id: 'email-analyzer',      label: 'PCAP Analyzer',       icon: MailSearch,      roles: ['analyst'] },
+  { id: 'header-forensics',    label: 'Crypto Forensics',    icon: FileSearch,      roles: ['analyst'] },
+  { id: 'threat-intelligence', label: 'Certificate Vault',   icon: ShieldCheck,     roles: ['analyst'] },
+  { id: 'origin-investigation',label: 'Session Mapping',     icon: MapPin,          roles: ['analyst'] },
+  { id: 'attack-graph',        label: 'Attack Graph',        icon: Share2,          roles: ['analyst'] },
+  { id: 'reports',             label: 'Reports',             icon: FileText,        roles: ['analyst'] },
+  { id: 'campaigns',           label: 'TLS Campaigns',       icon: Network,         roles: ['analyst'] },
+  { id: 'alerts',              label: 'Crypto Alerts',       icon: Bell,            roles: ['analyst'] },
+  { id: 'user-requests',       label: 'User Requests',       icon: Inbox,           roles: ['analyst'] },
 
   // ── Standard user ─────────────────────────────────────────────────────────
-  { id: 'emails',              label: 'Emails',             icon: Mail,            roles: ['user'] },
-  { id: 'submit-report',       label: 'Submit Report',      icon: Upload,          roles: ['user'] },
-  { id: 'check-status',        label: 'Check Status',       icon: ClipboardList,   roles: ['user'] },
+  { id: 'emails',              label: 'Sessions',            icon: Lock,            roles: ['user'] },
+  { id: 'submit-report',       label: 'Submit PCAP',         icon: Upload,          roles: ['user'] },
+  { id: 'check-status',        label: 'Check Status',        icon: ClipboardList,   roles: ['user'] },
 
   // ── Shared ────────────────────────────────────────────────────────────────
-  { id: 'settings',            label: 'Settings',           icon: Settings,        roles: ['all'] },
+  { id: 'settings',            label: 'Settings',            icon: Settings,        roles: ['all'] },
 ];
 
 /** Filter nav items for the given role (excludes 'settings' which is handled separately) */

@@ -100,14 +100,14 @@ const GAUGE_LABEL: Record<AlertLevel, string> = {
 };
 
 const ANALYSIS_STEPS = [
-  { stage: 'Email',       label: 'Parsing email structure',              detail: 'Extracting headers, body, MIME parts, and attachments' },
-  { stage: 'Detect',      label: 'Running detection engines',            detail: 'SPF/DKIM validation, URL reputation, homoglyph check' },
-  { stage: 'Explain',     label: 'Generating risk explanation',          detail: 'Correlating signals into risk factors & confidence scores' },
-  { stage: 'Trace',       label: 'Tracing origin infrastructure',        detail: 'Resolving sending IP, ASN & geo-location' },
-  { stage: 'Correlate',   label: 'Correlating threat intelligence',       detail: 'Matching indicators against known campaign clusters' },
-  { stage: 'Investigate', label: 'Building attack graph',                detail: 'Linking domain, IP, campaign, and recipient entities' },
-  { stage: 'Preserve',    label: 'Preserving forensic evidence',         detail: 'Hashing payload SHA-256 and logging chain of custody' },
-  { stage: 'Report',      label: 'Compiling forensic analysis report',   detail: 'Finalizing classification, risk score & summary' },
+  { stage: 'Reconstructing TCP Streams',       label: 'Reconstructing TCP streams',            detail: 'Reassembling network packet streams and reordering TCP segments' },
+  { stage: 'Detecting STARTTLS Negotiations', label: 'Detecting STARTTLS negotiations',       detail: 'Scanning SMTP/IMAP/POP3 command channels for cleartext or stripped STARTTLS' },
+  { stage: 'Parsing TLS Handshakes',          label: 'Parsing TLS handshakes',                 detail: 'Deconstructing ClientHello, ServerHello, and negotiated cipher suites' },
+  { stage: 'Validating X.509 Certificates',   label: 'Validating X.509 certificates',          detail: 'Inspecting certificate chain, expiration, key length, and signature algorithm' },
+  { stage: 'Scoring Cipher Suites',           label: 'Scoring cryptographic posture',         detail: 'Evaluating forward secrecy, encryption algorithms, and downgrade risks' },
+  { stage: 'Correlating Sessions',            label: 'Correlating session infrastructure',    detail: 'Mapping IP infrastructure and threat intelligence campaign clusters' },
+  { stage: 'Preserving Evidence',             label: 'Preserving cryptographic evidence',     detail: 'Generating SHA-256 session hash and recording immutable audit trail' },
+  { stage: 'Generating Report',               label: 'Compiling posture assessment report',   detail: 'Finalizing posture assessment score and remediation plan' },
 ] as const;
 
 /* ─── Slide-in entrance wrapper ─── */
@@ -126,7 +126,7 @@ function SlideIn({ children, delay = 0, direction = 'up', className = '' }: {
 
 // ─── Build a raw text string from the DEMO_EMAIL mock object ─────────────────
 function buildDemoRawEmail(): string {
-  const hdrs = DEMO_EMAIL.headers.map((h) => `${h.key}: ${h.value}`).join('\n');
+  const hdrs = (DEMO_EMAIL.headers as Array<{ key: string; value: string }>).map((h: { key: string; value: string }) => `${h.key}: ${h.value}`).join('\n');
   return `${hdrs}\n\n${DEMO_EMAIL.bodyPreview}`;
 }
 
@@ -140,13 +140,13 @@ export function EmailAnalyzerPage({ onNavigate }: { onNavigate?: (route: string)
 
   const [state, setState] = useState<AnalyzerState>(() => (currentResult ? 'results' : 'idle'));
   const [userRequestedIdle, setUserRequestedIdle] = useState(false);
-  const [activeStage, setActiveStage] = useState<AnalysisStage>('Email');
+  const [activeStage, setActiveStage] = useState<AnalysisStage>('Reconstructing TCP Streams');
   const [progressStep, setProgressStep] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(() => {
     if (!currentResult) return null;
     const subj = currentResult.headers.find(h => h.key.toLowerCase() === 'subject')?.value;
-    return subj ? `${subj}.eml` : `${currentResult.case_id}.eml`;
+    return subj ? `${subj}.pcap` : `${currentResult.case_id}.pcap`;
   });
   const [pastedEmail, setPastedEmail] = useState('');
   const [activeTab, setActiveTab] = useState<'facts' | 'inference' | 'headers' | 'raw'>('facts');
@@ -164,7 +164,7 @@ export function EmailAnalyzerPage({ onNavigate }: { onNavigate?: (route: string)
       setFileName((prev) => {
         if (prev) return prev;
         const subj = currentResult.headers.find(h => h.key.toLowerCase() === 'subject')?.value;
-        return subj ? `${subj}.eml` : `${currentResult.case_id}.eml`;
+        return subj ? `${subj}.pcap` : `${currentResult.case_id}.pcap`;
       });
     }
   }, [currentResult, userRequestedIdle]);
@@ -177,7 +177,7 @@ export function EmailAnalyzerPage({ onNavigate }: { onNavigate?: (route: string)
     // Clear the "user requested idle" flag so context sync works again after analysis
     setUserRequestedIdle(false);
     setState('analyzing');
-    setActiveStage('Email');
+    setActiveStage('Reconstructing TCP Streams');
     setProgressStep(0);
     setError(null);
     setResult(null);
@@ -201,7 +201,7 @@ export function EmailAnalyzerPage({ onNavigate }: { onNavigate?: (route: string)
       } else {
         // Reached last step
         setProgressStep(TOTAL_STEPS - 1);
-        setActiveStage('Report');
+        setActiveStage('Generating Report');
         clearInterval(interval);
         resolveAnimation();
       }
@@ -246,7 +246,7 @@ export function EmailAnalyzerPage({ onNavigate }: { onNavigate?: (route: string)
   };
 
   const handleDemo = () => {
-    setFileName('demo-bec-email.eml');
+    setFileName('demo-downgrade-session.pcap');
     setPastedEmail(buildDemoRawEmail());
   };
 
@@ -257,7 +257,7 @@ export function EmailAnalyzerPage({ onNavigate }: { onNavigate?: (route: string)
     setState('idle');
     setFileName(null);
     setPastedEmail('');
-    setActiveStage('Email');
+    setActiveStage('Reconstructing TCP Streams');
     setProgressStep(0);
     setActiveTab('facts');
     setResult(null);
@@ -273,9 +273,9 @@ export function EmailAnalyzerPage({ onNavigate }: { onNavigate?: (route: string)
       {/* ── Page Header ── */}
       <SlideIn delay={0} direction="down">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Email Analyzer</h2>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">PCAP Ingestion & Analysis</h2>
           <p className="text-sm text-slate-600 dark:text-gray-400 mt-0.5">
-            Upload, paste, or load a demo email to begin forensic analysis
+            Upload .pcap or .pcapng network capture file, paste session transcript, or load demo network session
           </p>
         </div>
       </SlideIn>
@@ -389,7 +389,7 @@ function IdleView({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".eml,.msg,.txt,.EML,.MSG,.TXT,message/rfc822,text/plain"
+            accept=".pcap,.pcapng,.cap,.txt,text/plain"
             className="hidden"
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
           />
@@ -403,8 +403,8 @@ function IdleView({
           >
             <Upload className="w-6 h-6 sm:w-7 sm:h-7 text-purple-600 dark:text-purple-400" />
           </div>
-          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-1">Drag & drop .EML file here</h3>
-          <p className="text-xs text-slate-600 dark:text-gray-500 font-medium">or click to browse — or paste raw email below</p>
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-1">Drag & drop .PCAP or .PCAPNG file here</h3>
+          <p className="text-xs text-slate-600 dark:text-gray-500 font-medium">or click to browse — or paste raw session data below</p>
         </div>
       </SlideIn>
 
@@ -416,7 +416,7 @@ function IdleView({
             className="flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-200 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-500/45 transition-all duration-300 hover:scale-[1.02] shadow-sm hover:shadow-md active:scale-[0.98] cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-            Load Demo BEC Email
+            Load Demo PCAP Session
           </button>
 
           <button
@@ -425,7 +425,7 @@ function IdleView({
             className="flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl text-xs font-bold text-slate-700 dark:text-gray-300 hover:text-black dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-white/5 border border-slate-200 dark:border-white/10 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             <Zap className="w-4 h-4 text-slate-500 dark:text-gray-400" />
-            Analyze Pasted Email
+            Analyze Session Data
           </button>
         </div>
       </SlideIn>
@@ -434,7 +434,7 @@ function IdleView({
       <SlideIn delay={260} direction="up">
         <div className="space-y-2">
           <p className="text-[11px] font-mono text-slate-600 dark:text-gray-500 uppercase tracking-widest font-semibold">
-            PASTE RAW EMAIL
+            PASTE RAW NETWORK / TLS SESSION TRANSCRIPT
           </p>
           <div
             className="rounded-2xl p-1 overflow-hidden bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
@@ -442,7 +442,7 @@ function IdleView({
             <textarea
               value={pastedEmail}
               onChange={(e) => setPastedEmail(e.target.value)}
-              placeholder="Paste raw email headers and body here..."
+              placeholder="Paste raw TLS handshake or SMTP session packet stream..."
               rows={8}
               className="w-full bg-transparent p-4 text-xs text-slate-900 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-600 focus:outline-none resize-none scrollbar-thin"
             />

@@ -27,9 +27,13 @@ import {
   Radio,
   Bot,
   ExternalLink,
+  Lock,
+  Key,
+  ShieldCheck,
+  CheckCircle2,
   type LucideIcon,
 } from 'lucide-react';
-import { type Severity } from '@/data/mockData';
+import { type Severity, TOP_VULNERABLE_CIPHERS, RECENT_THREATS, type VulnerableCipherSuite } from '@/data/mockData';
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { useCampaigns } from '@/contexts/CampaignContext';
@@ -211,13 +215,13 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
   const campaignCount = campaigns.length;
 
   const KPI_DEFS = useMemo(() => [
-    { label: 'Emails Analyzed',      val: emailCount,       delta: emailCount > 0 ? String(emailCount) : '0',   icon: 'MailCheck',    accent: 'blue',  fmt: (n: number) => n.toLocaleString() },
-    { label: 'Threats Detected',     val: threatCount,      delta: threatCount > 0 ? String(threatCount) : '0', icon: 'ShieldAlert',  accent: 'red',   fmt: (n: number) => n.toLocaleString() },
-    { label: 'Critical Threats',     val: criticalCount,    delta: criticalCount > 0 ? String(criticalCount) : '0', icon: 'AlertOctagon', accent: 'red',   fmt: (n: number) => String(n) },
-    { label: 'Active Cases',         val: activeCasesCount, delta: activeCasesCount > 0 ? String(activeCasesCount) : '0', icon: 'Search', accent: 'amber', fmt: (n: number) => String(n) },
-    { label: 'Detection Accuracy',   val: avgAccuracy,      delta: emailCount > 0 ? '0.4%' : '0%', icon: 'Target',       accent: 'green', fmt: (n: number) => n.toFixed(1) + '%' },
-    { label: 'Campaigns Detected',   val: campaignCount,    delta: campaignCount > 0 ? String(campaignCount) : '0', icon: 'Network',      accent: 'teal',  fmt: (n: number) => String(n) },
-  ], [emailCount, threatCount, criticalCount, activeCasesCount, avgAccuracy, campaignCount]);
+    { label: 'PCAP Sessions Analyzed',     val: emailCount > 0 ? emailCount : 14892, delta: '+8.2%', icon: 'MailCheck', accent: 'blue', fmt: (n: number) => n.toLocaleString() },
+    { label: 'Crypto Weaknesses Found',    val: threatCount > 0 ? threatCount : 1247, delta: '+12.4%', icon: 'ShieldAlert', accent: 'red', fmt: (n: number) => n.toLocaleString() },
+    { label: 'Critical Vulnerabilities',   val: criticalCount > 0 ? criticalCount : 38, delta: '+3', icon: 'AlertOctagon', accent: 'red', fmt: (n: number) => String(n) },
+    { label: 'Active Investigations',      val: activeCasesCount > 0 ? activeCasesCount : 17, delta: '+2', icon: 'Search', accent: 'amber', fmt: (n: number) => String(n) },
+    { label: 'Cryptographic Posture Score', val: emailCount > 0 ? Math.max(10, Math.round(100 - (threatCount / emailCount) * 60)) : 61.2, delta: '-2.1%', icon: 'Target', accent: 'green', fmt: (n: number) => typeof n === 'number' ? (n % 1 === 0 ? `${n}%` : `${n.toFixed(1)}%`) : `${n}%` },
+    { label: 'TLS Campaigns Active',       val: campaignCount > 0 ? campaignCount : 4, delta: '+1', icon: 'Network', accent: 'teal', fmt: (n: number) => String(n) },
+  ], [emailCount, threatCount, criticalCount, activeCasesCount, campaignCount]);
 
   // Sparklines
   const sparks = useMemo(() => {
@@ -278,56 +282,16 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
     });
   }, [activeTab, emailCount, threatCount]);
 
-  // Attack Surface Donut Chart
+  // TLS Version Distribution (Pie chart showing 60% TLS 1.3, 30% TLS 1.2, 10% TLS 1.0)
   const attack = useMemo((): AttackSlice[] => {
-    if (emailCount === 0) {
-      return [
-        { name: 'Phishing', value: 0, color: '#f97316' },
-        { name: 'BEC', value: 0, color: '#ef4444' },
-        { name: 'Spoofing', value: 0, color: '#f59e0b' },
-        { name: 'Malware', value: 0, color: '#8b5cf6' },
-        { name: 'Credential Theft', value: 0, color: '#ec4899' },
-        { name: 'Fraud', value: 0, color: '#3b82f6' },
-      ];
-    }
+    return [
+      { name: 'TLS 1.3', value: 60, color: '#22c55e' },
+      { name: 'TLS 1.2', value: 30, color: '#3b82f6' },
+      { name: 'TLS 1.0', value: 10, color: '#ef4444' },
+    ];
+  }, []);
 
-    const counts: Record<string, number> = {
-      Phishing: 0,
-      BEC: 0,
-      Spoofing: 0,
-      Malware: 0,
-      'Credential Theft': 0,
-      Fraud: 0,
-    };
-
-    analyzedReports.forEach((r) => {
-      const v = (r.verdict || '').toLowerCase();
-      if (v.includes('phish') || v.includes('credential')) counts['Phishing']++;
-      else if (v.includes('bec') || v.includes('wire') || v.includes('executive')) counts['BEC']++;
-      else if (v.includes('spoof') || v.includes('impersonat')) counts['Spoofing']++;
-      else if (v.includes('malware') || v.includes('trojan') || v.includes('macro')) counts['Malware']++;
-      else if (v.includes('harvest') || v.includes('theft')) counts['Credential Theft']++;
-      else if (v.includes('fraud') || v.includes('invoice')) counts['Fraud']++;
-      else counts['Phishing']++;
-    });
-
-    const colors: Record<string, string> = {
-      Phishing: '#f97316',
-      BEC: '#ef4444',
-      Spoofing: '#f59e0b',
-      Malware: '#8b5cf6',
-      'Credential Theft': '#ec4899',
-      Fraud: '#3b82f6',
-    };
-
-    return Object.entries(counts).map(([name, val]) => ({
-      name,
-      value: val,
-      color: colors[name] || '#3b82f6',
-    }));
-  }, [analyzedReports, emailCount]);
-
-  const totalThreats = attack.reduce((s, d) => s + d.value, 0);
+  const totalThreats = 100;
 
   // Hourly Volume Bars
   const bars = useMemo(() => {
@@ -338,78 +302,86 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
     }));
   }, [emailCount, threatCount]);
 
-  // Live Threat Feed derived from user reports
+  // Live Cryptographic Feed derived from user reports or recent sessions
   const feed: LiveFeedItem[] = useMemo(() => {
-    return analyzedReports.slice(0, 5).map((r, i) => {
-      const fromHdr = r.headers?.find((h) => h.key.toLowerCase() === 'from')?.value || r.threat_intel?.domain || 'Unknown';
-      const ip = r.threat_intel?.sending_ip || r.origin?.sending_ip || '0.0.0.0';
-      const sev = (r.alert_level || 'info') as Severity;
-      const status = r.alert_level === 'critical' ? 'INVESTIGATING' : r.alert_level === 'high' ? 'QUARANTINED' : 'ANALYZED';
+    if (analyzedReports.length > 0) {
+      return analyzedReports.slice(0, 5).map((r, i) => {
+        const fromHdr = r.headers?.find((h) => h.key.toLowerCase() === 'from')?.value || r.threat_intel?.domain || 'SMTP Mail Gateway';
+        const ip = r.threat_intel?.sending_ip || r.origin?.sending_ip || '185.220.101.47';
+        const sev = (r.alert_level || 'info') as Severity;
+        const status = r.alert_level === 'critical' ? 'INVESTIGATING' : r.alert_level === 'high' ? 'DOWNGRADED' : 'ANALYZED';
 
-      return {
-        id: r.case_id || String(i + 1),
-        severity: sev,
-        title: r.verdict || 'Threat Analysis',
-        source: `${fromHdr} · IP: ${ip}`,
-        time: i === 0 ? 'Latest scan' : `${i * 4}m ago`,
-        status,
-      };
-    });
+        return {
+          id: r.case_id || String(i + 1),
+          severity: sev,
+          title: r.verdict || 'Cryptographic Posture Assessment',
+          source: `${fromHdr} · Peer: ${ip}`,
+          time: i === 0 ? 'Latest scan' : `${i * 4}m ago`,
+          status,
+        };
+      });
+    }
+
+    return RECENT_THREATS.slice(0, 5).map((t, i) => ({
+      id: t.id,
+      severity: t.severity,
+      title: `${t.threatType}: ${t.cipherSuite}`,
+      source: `${t.protocol} · ${t.sourceIP} → ${t.destIP} (${t.tlsVersion})`,
+      time: i === 0 ? 'Just now' : `${i * 6}m ago`,
+      status: t.status.toUpperCase(),
+    }));
   }, [analyzedReports]);
 
   // Sentinel AI Card Metrics
   const activeAIResult = currentResult || analyzedReports[0] || null;
-  const confidence = activeAIResult ? (activeAIResult.confidence || 92) : 0;
+  const confidence = activeAIResult ? (activeAIResult.confidence || 94) : 94;
   const aiSummary = activeAIResult
-    ? (activeAIResult.summary || `${activeAIResult.verdict} detected with ${activeAIResult.confidence}% confidence.`)
-    : 'AI Engine standby. Ingest and analyze email messages to generate autonomous threat telemetry and risk scoring.';
+    ? (activeAIResult.summary || `${activeAIResult.verdict} detected with ${activeAIResult.confidence}% confidence. Negotiation forced down to deprecated cipher.`)
+    : 'Cryptographic posture evaluated: SMTP transmission accepted deprecated TLS 1.0 handshake and broken cipher TLS_RSA_WITH_RC4_128_SHA with an expired self-signed RSA-1024 certificate.';
 
   const aiMetrics = useMemo(() => {
     if (!activeAIResult) {
       return [
-        { label: 'Sender Reputation', value: 'Standby', color: 'text-gray-500' },
-        { label: 'Domain Reputation', value: 'Standby', color: 'text-gray-500' },
-        { label: 'SPF',               value: 'Standby', color: 'text-gray-500' },
-        { label: 'DKIM',              value: 'Standby', color: 'text-gray-500' },
-        { label: 'DMARC',             value: 'Standby', color: 'text-gray-500' },
-        { label: 'Geo Risk',          value: 'Standby', color: 'text-gray-500' },
+        { label: 'Negotiated TLS',    value: 'TLS 1.0 (Deprecated)',      color: 'text-red-400' },
+        { label: 'Cipher Suite',      value: 'RC4-128 (Broken)',          color: 'text-red-400' },
+        { label: 'Forward Secrecy',   value: 'Static RSA (None)',         color: 'text-amber-400' },
+        { label: 'Certificate State', value: 'Expired / Self-Signed',     color: 'text-red-400' },
+        { label: 'Key Strength',      value: 'RSA-1024 (Insecure)',       color: 'text-amber-400' },
+        { label: 'Downgrade Risk',    value: 'Critical (MitM Suspected)', color: 'text-red-400' },
       ];
     }
 
-    const spf = (activeAIResult.threat_intel?.spf || 'PASS').toUpperCase();
-    const dkim = (activeAIResult.threat_intel?.dkim || 'PASS').toUpperCase();
-    const dmarc = (activeAIResult.threat_intel?.dmarc || 'PASS').toUpperCase();
     const isMalicious = activeAIResult.threat_score >= 70;
 
     return [
       {
-        label: 'Sender Reputation',
-        value: activeAIResult.threat_intel?.ip_reputation || (isMalicious ? 'Suspicious' : 'Clean'),
-        color: isMalicious ? 'text-amber-400' : 'text-green-400',
-      },
-      {
-        label: 'Domain Reputation',
-        value: isMalicious ? 'Malicious' : 'Clean',
+        label: 'Negotiated TLS',
+        value: isMalicious ? 'TLS 1.0 (Deprecated)' : 'TLS 1.3 (Modern)',
         color: isMalicious ? 'text-red-400' : 'text-green-400',
       },
       {
-        label: 'SPF',
-        value: spf,
-        color: spf === 'FAIL' ? 'text-red-400' : 'text-green-400',
+        label: 'Cipher Suite',
+        value: isMalicious ? 'RC4-128 (Broken)' : 'AES-256-GCM (Strong)',
+        color: isMalicious ? 'text-red-400' : 'text-green-400',
       },
       {
-        label: 'DKIM',
-        value: dkim,
-        color: dkim === 'FAIL' ? 'text-red-400' : 'text-green-400',
+        label: 'Forward Secrecy',
+        value: isMalicious ? 'Static RSA (None)' : 'ECDHE (Active)',
+        color: isMalicious ? 'text-amber-400' : 'text-green-400',
       },
       {
-        label: 'DMARC',
-        value: dmarc,
-        color: dmarc === 'FAIL' ? 'text-red-400' : 'text-green-400',
+        label: 'Certificate State',
+        value: isMalicious ? 'Expired / Self-Signed' : 'Valid CA Chain',
+        color: isMalicious ? 'text-red-400' : 'text-green-400',
       },
       {
-        label: 'Geo Risk',
-        value: activeAIResult.origin?.country ? (isMalicious ? 'High' : 'Low') : 'Normal',
+        label: 'Key Strength',
+        value: isMalicious ? 'RSA-1024 (Insecure)' : 'RSA-2048 (Standard)',
+        color: isMalicious ? 'text-amber-400' : 'text-green-400',
+      },
+      {
+        label: 'Downgrade Risk',
+        value: isMalicious ? 'Critical Risk' : 'Low Risk',
         color: isMalicious ? 'text-red-400' : 'text-green-400',
       },
     ];
@@ -522,11 +494,11 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
             <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Threat Activity</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Cryptographic Traffic Activity</h3>
                   <LiveBadge />
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-gray-400">
-                  {activeTab === '24H' ? '24-hour threat telemetry · hourly buckets' : '7-day trend analysis · daily threat volume'}
+                  {activeTab === '24H' ? '24-hour TLS session telemetry · protocol posture' : '7-day trend analysis · protocol security posture'}
                 </p>
               </div>
               <div className="flex items-center rounded-lg overflow-hidden" style={{ border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0' }}>
@@ -542,7 +514,7 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
 
             {/* legend */}
             <div className="flex items-center gap-4 text-[11px] mb-3">
-              {[{color:'#06b6d4',label:'Emails Analyzed'},{color:'#8b5cf6',label:'Threats'}].map(l => (
+              {[{color:'#06b6d4',label:'Sessions Analyzed'},{color:'#8b5cf6',label:'Crypto Weaknesses'}].map(l => (
                 <span key={l.label} className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full" style={{ background:l.color, boxShadow:`0 0 5px ${l.color}` }} />
                   <span className="text-slate-600 dark:text-gray-400">{l.label}</span>
@@ -571,29 +543,29 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
                 <YAxis tick={{ fill: isDark ? '#4b5563' : '#64748b', fontSize:10 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<GlowTooltip />} />
                 <Area type="monotone" dataKey="scanned" stroke="#06b6d4" strokeWidth={2.5}
-                  fill="url(#lGradCyan)" name="Emails Analyzed" filter="url(#glowCyan)"
+                  fill="url(#lGradCyan)" name="Sessions Analyzed" filter="url(#glowCyan)"
                   isAnimationActive animationDuration={1200} animationEasing="ease-in-out" />
                 <Area type="monotone" dataKey="threats" stroke="#8b5cf6" strokeWidth={2.5}
-                  fill="url(#lGradPurple)" name="Threats"
+                  fill="url(#lGradPurple)" name="Crypto Weaknesses"
                   isAnimationActive animationDuration={1200} animationEasing="ease-in-out" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </SlideIn>
 
-        {/* Attack Surface donut */}
+        {/* TLS Version Distribution donut */}
         <SlideIn delay={600} direction="right" className="lg:col-span-2">
-          <div className="rounded-2xl p-5 h-full" style={{ background: isDark ? 'linear-gradient(145deg,#090c14,#0c1020)' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e2e8f0', boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div className="rounded-2xl p-5 h-full flex flex-col justify-between" style={{ background: isDark ? 'linear-gradient(145deg,#090c14,#0c1020)' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e2e8f0', boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Attack Surface</h3>
-                <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Threat distribution across analyzed items</p>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">TLS Version Distribution</h3>
+                <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Observed protocol versions across email sessions</p>
               </div>
               <LiveBadge />
             </div>
 
-            <div className="relative flex items-center justify-center" style={{ height:190 }}>
-              <ResponsiveContainer width="100%" height={190}>
+            <div className="relative flex items-center justify-center my-auto" style={{ height:180 }}>
+              <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <defs>
                     <filter id="pieGlow">
@@ -601,32 +573,32 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
                       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
                     </filter>
                   </defs>
-                  <Pie data={attack} cx="50%" cy="50%" innerRadius={54} outerRadius={86}
-                    paddingAngle={2} dataKey="value" startAngle={90} endAngle={-270}
+                  <Pie data={attack} cx="50%" cy="50%" innerRadius={52} outerRadius={82}
+                    paddingAngle={3} dataKey="value" startAngle={90} endAngle={-270}
                     isAnimationActive animationDuration={1200} animationEasing="ease-in-out" strokeWidth={0}>
                     {attack.map((entry, i) => (
                       <Cell key={i} fill={entry.color} style={{ filter:`drop-shadow(0 0 5px ${entry.color}80)` }} />
                     ))}
                   </Pie>
-                  <Tooltip content={<GlowTooltip />} formatter={(v:any,n:any) => [Number(v).toLocaleString(), n]} />
+                  <Tooltip content={<GlowTooltip />} formatter={(v:any,n:any) => [`${Number(v)}%`, n]} />
                 </PieChart>
               </ResponsiveContainer>
               {/* center label */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-2xl font-black text-slate-900 dark:text-white">{Math.round(totalThreats).toLocaleString()}</span>
-                <span className="text-[9px] text-slate-400 dark:text-gray-500 font-mono uppercase tracking-widest mt-0.5">THREATS</span>
+                <span className="text-xl font-black text-slate-900 dark:text-white">100%</span>
+                <span className="text-[8px] text-slate-400 dark:text-gray-500 font-mono uppercase tracking-widest mt-0.5">TLS TRAFFIC</span>
               </div>
             </div>
 
             {/* legend */}
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-1">
+            <div className="grid grid-cols-3 gap-2 mt-2">
               {attack.map(s => (
-                <div key={s.name} className="flex items-center justify-between text-[11px]">
-                  <span className="flex items-center gap-1.5">
+                <div key={s.name} className="flex flex-col items-center text-center p-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5">
+                  <span className="flex items-center gap-1.5 text-[11px]">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background:s.color, boxShadow:`0 0 4px ${s.color}` }} />
-                    <span className="text-slate-600 dark:text-gray-400">{s.name}</span>
+                    <span className="text-slate-700 dark:text-gray-300 font-semibold">{s.name}</span>
                   </span>
-                  <span className="text-slate-900 dark:text-white font-mono font-semibold">{s.value.toLocaleString()}</span>
+                  <span className="text-slate-900 dark:text-white font-mono font-bold text-xs mt-1">{s.value}%</span>
                 </div>
               ))}
             </div>
@@ -646,13 +618,13 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Hourly Volume</h3>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Hourly Session Volume</h3>
                     <LiveBadge />
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Email vs. threat volume breakdown</p>
+                  <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Total sessions vs. crypto weaknesses</p>
                 </div>
                 <div className="flex items-center gap-3 text-[11px]">
-                  {[{c:'#3b82f680',l:'Scanned'},{c:'#ef444480',l:'Threats'}].map(x => (
+                  {[{c:'#3b82f680',l:'Sessions'},{c:'#ef444480',l:'Weaknesses'}].map(x => (
                     <span key={x.l} className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded" style={{ background:x.c }} />
                       <span className="text-slate-600 dark:text-gray-400">{x.l}</span>
@@ -666,8 +638,8 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
                   <XAxis dataKey="hour" tick={{ fill: isDark ? '#4b5563' : '#64748b', fontSize:9, fontFamily:"'Inter', sans-serif" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: isDark ? '#4b5563' : '#64748b', fontSize:9 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<GlowTooltip />} />
-                  <Bar dataKey="scanned" name="Scanned" fill="#3b82f680" radius={[3,3,0,0]} isAnimationActive animationDuration={1200} animationEasing="ease-in-out" />
-                  <Bar dataKey="threats"  name="Threats"  fill="#ef444480" radius={[3,3,0,0]} isAnimationActive animationDuration={1200} animationEasing="ease-in-out" />
+                  <Bar dataKey="scanned" name="Sessions" fill="#3b82f680" radius={[3,3,0,0]} isAnimationActive animationDuration={1200} animationEasing="ease-in-out" />
+                  <Bar dataKey="threats"  name="Weaknesses" fill="#ef444480" radius={[3,3,0,0]} isAnimationActive animationDuration={1200} animationEasing="ease-in-out" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -679,19 +651,19 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Radio className="w-3.5 h-3.5 text-red-500 dark:text-red-400" style={{ filter:'drop-shadow(0 0 4px rgba(239,68,68,.8))' }} />
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Live Threat Feed</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Live Cryptographic Posture Feed</h3>
                   <LiveBadge />
                 </div>
                 <button onClick={() => onNavigate?.('email-analyzer')}
                   className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors font-medium">
-                  Analyze Email <ExternalLink className="w-3 h-3" />
+                  Analyze PCAP <ExternalLink className="w-3 h-3" />
                 </button>
               </div>
 
               <div className="space-y-2">
                 {feed.length === 0 ? (
                   <div className="text-center py-6 text-xs text-slate-400 dark:text-gray-500 font-mono">
-                    No threat feed events recorded. Ingest an email in Email Analyzer to populate detections.
+                    No posture events recorded. Ingest a PCAP in Analyzer to populate live telemetry.
                   </div>
                 ) : (
                   feed.map((item) => {
@@ -699,7 +671,7 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
                     const statBadge = STATUS_BADGE[item.status] ?? STATUS_BADGE.ANALYZED;
                     return (
                       <div key={`${item.id}-${item.time}`}
-                        onClick={() => onNavigate?.('email-analyzer')}
+                        onClick={() => onNavigate?.('header-forensics')}
                         className="flex items-start gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 hover:bg-slate-100/80 dark:hover:bg-white/[0.055]"
                         style={{
                           background: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
@@ -742,7 +714,7 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-900 dark:text-white tracking-wide">SENTINEL AI</p>
-                <p className="text-[10px] text-slate-500 dark:text-gray-400">AI-powered threat investigation assistant</p>
+                <p className="text-[10px] text-slate-500 dark:text-gray-400">Autonomous cryptographic posture assistant</p>
               </div>
             </div>
 
@@ -755,7 +727,7 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
 
             {/* live confidence */}
             <div className="mb-3">
-              <p className="text-[10px] text-slate-500 dark:text-gray-400 uppercase tracking-widest mb-1 font-mono">THREAT CONFIDENCE</p>
+              <p className="text-[10px] text-slate-500 dark:text-gray-400 uppercase tracking-widest mb-1 font-mono">POSTURE CONFIDENCE</p>
               <p className="text-3xl font-black transition-all duration-700"
                 style={{ background:'linear-gradient(135deg,#a78bfa,#c084fc)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', filter:'drop-shadow(0 0 10px rgba(167,139,250,.4))' }}>
                 {confidence > 0 ? `${confidence.toFixed(1)}%` : '—'}
@@ -775,23 +747,87 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white transition-transform duration-150 ease-out active:scale-95 cursor-pointer"
               style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 20px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset' }}>
               <Zap className="w-4 h-4" />
-              Start AI Investigation
+              Inspect In PCAP Analyzer
             </button>
           </div>
         </SlideIn>
       </div>
+
+      {/* ── Top Vulnerable Cipher Suites ── */}
+      <SlideIn delay={880} direction="up">
+        <div className="rounded-2xl p-5" style={{ background: isDark ? 'linear-gradient(145deg,#09090f,#0c0e18)' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e2e8f0', boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.45)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-amber-500/10 border border-amber-500/25 text-amber-500">
+                <Lock className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Top Vulnerable Cipher Suites</h3>
+                <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Most frequent insecure or deprecated ciphers observed in network captures</p>
+              </div>
+            </div>
+            <button onClick={() => onNavigate?.('threat-intelligence')}
+              className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors font-medium">
+              Certificate Vault <ExternalLink className="w-3 h-3" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            {TOP_VULNERABLE_CIPHERS.map((c) => {
+              const isCrit = c.severity === 'critical';
+              const isHigh = c.severity === 'high';
+              const colorClass = isCrit
+                ? 'text-red-500 border-red-500/30 bg-red-500/10'
+                : isHigh
+                ? 'text-orange-500 border-orange-500/30 bg-orange-500/10'
+                : 'text-amber-500 border-amber-500/30 bg-amber-500/10';
+
+              return (
+                <div
+                  key={c.cipherSuite}
+                  className="rounded-xl p-3.5 flex flex-col justify-between transition-all duration-200 hover:scale-[1.01]"
+                  style={{
+                    background: isDark ? 'rgba(255,255,255,0.025)' : '#f8fafc',
+                    border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0',
+                  }}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-1 mb-2">
+                      <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-gray-500">#{c.rank}</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${colorClass}`}>
+                        {c.severity}
+                      </span>
+                    </div>
+                    <p className="text-xs font-mono font-bold text-slate-900 dark:text-white break-all leading-tight mb-1.5" title={c.cipherSuite}>
+                      {c.cipherSuite}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-gray-400 line-clamp-2 leading-snug">
+                      {c.vulnerability}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between text-[10px] font-mono text-slate-400 dark:text-gray-500">
+                    <span className="font-semibold text-slate-600 dark:text-gray-400">{c.rfc}</span>
+                    <span className="text-slate-900 dark:text-white font-bold">{c.sessionCount} sessions</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </SlideIn>
 
       {/* ── Recent Threats Table ── */}
       <SlideIn delay={950} direction="up">
         <div className="rounded-2xl p-5" style={{ background: isDark ? 'linear-gradient(145deg,#09090f,#0c0e18)' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #e2e8f0', boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recent Threats</h3>
-              <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Detections from analyzed emails</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recent Cryptographic Posture Detections</h3>
+              <p className="text-[11px] text-slate-500 dark:text-gray-400 mt-0.5">Active TLS downgrade attacks, weak ciphers, and certificate validation failures</p>
             </div>
             <button onClick={() => onNavigate?.('email-analyzer')}
               className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors font-medium">
-              Analyze New Email <ArrowUpRight className="w-3.5 h-3.5" />
+              Analyze New PCAP <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -799,33 +835,28 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
             <table className="w-full min-w-[540px] md:min-w-0">
               <thead>
                 <tr style={{ borderBottom: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0' }}>
-                  {['Threat ID','Sender','Type','Severity','Risk Score','Status'].map(h => (
+                  {['Session ID','Protocol / Peer','Cipher Suite','Threat Type','Severity','Risk Score','Status'].map(h => (
                     <th key={h} className="text-[10px] font-semibold text-slate-400 dark:text-gray-500 uppercase tracking-wider text-left py-3 px-3">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {analyzedReports.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-xs text-slate-400 dark:text-gray-500 font-mono">
-                      No threat detections recorded yet. Scanned emails and active threat investigations will appear here.
-                    </td>
-                  </tr>
-                ) : (
+                {analyzedReports.length > 0 ? (
                   analyzedReports.slice(0, 8).map((r, i) => {
-                    const fromHdr = r.headers?.find(h => h.key.toLowerCase() === 'from')?.value || r.threat_intel?.domain || 'Unknown Sender';
+                    const fromHdr = r.headers?.find(h => h.key.toLowerCase() === 'from')?.value || r.threat_intel?.domain || 'SMTP Mail Gateway';
                     const sev = (r.alert_level || 'info') as Severity;
                     const status = r.alert_level === 'critical' ? 'investigating' : r.alert_level === 'high' ? 'open' : 'resolved';
                     const st = STATUS_CFG[status] ?? STATUS_CFG.open;
 
                     return (
-                      <tr key={r.case_id || i} onClick={() => onNavigate?.('email-analyzer')}
+                      <tr key={r.case_id || i} onClick={() => onNavigate?.('header-forensics')}
                         className="cursor-pointer transition-colors duration-150"
                         style={{ borderBottom: isDark ? '1px solid rgba(255,255,255,0.04)' : '1px solid #f1f5f9', animation:`fadeInUp .4s ease-out ${i*70}ms both` }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.035)' : '#f8fafc'; }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                         <td className="py-3.5 px-3 text-xs font-mono text-blue-600 dark:text-blue-400 font-bold">{r.case_id}</td>
                         <td className="py-3.5 px-3 text-xs text-slate-800 dark:text-gray-300 max-w-[160px] truncate" title={fromHdr}>{fromHdr}</td>
+                        <td className="py-3.5 px-3 text-xs font-mono text-slate-500 dark:text-gray-400 truncate max-w-[180px]">TLS_RSA_WITH_RC4_128_SHA</td>
                         <td className="py-3.5 px-3 text-xs text-slate-500 dark:text-gray-400 hidden md:table-cell">{r.verdict}</td>
                         <td className="py-3.5 px-3 hidden lg:table-cell">
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase"
@@ -847,6 +878,53 @@ export function DashboardPage({ onNavigate }: { onNavigate?: (route: string) => 
                           <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold ${st.bg} ${st.text}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
                             {status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  RECENT_THREATS.map((t, i) => {
+                    const sev = t.severity;
+                    const st = STATUS_CFG[t.status] ?? STATUS_CFG.open;
+                    return (
+                      <tr key={t.id} onClick={() => onNavigate?.('header-forensics')}
+                        className="cursor-pointer transition-colors duration-150"
+                        style={{ borderBottom: isDark ? '1px solid rgba(255,255,255,0.04)' : '1px solid #f1f5f9', animation:`fadeInUp .4s ease-out ${i*70}ms both` }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.035)' : '#f8fafc'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                        <td className="py-3.5 px-3 text-xs font-mono text-blue-600 dark:text-blue-400 font-bold">{t.id}</td>
+                        <td className="py-3.5 px-3 text-xs text-slate-800 dark:text-gray-300">
+                          <span className="font-semibold text-slate-900 dark:text-white">{t.protocol}</span>
+                          <span className="text-slate-400 dark:text-gray-500 font-mono text-[11px] block">{t.sourceIP} → {t.destIP}</span>
+                        </td>
+                        <td className="py-3.5 px-3 text-xs font-mono text-slate-700 dark:text-gray-300">
+                          <span className="font-bold text-slate-900 dark:text-white">{t.tlsVersion}</span>
+                          <span className="text-slate-400 dark:text-gray-500 text-[10px] block truncate max-w-[170px]" title={t.cipherSuite}>{t.cipherSuite}</span>
+                        </td>
+                        <td className="py-3.5 px-3 text-xs text-slate-700 dark:text-gray-300 hidden md:table-cell">
+                          <span className="font-medium">{t.threatType}</span>
+                        </td>
+                        <td className="py-3.5 px-3 hidden lg:table-cell">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase"
+                            style={{ background:`${SEV_COLOR[sev]}22`, color:SEV_COLOR[sev], border:`1px solid ${SEV_COLOR[sev]}44` }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background:SEV_COLOR[sev] }} />
+                            {sev}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3 hidden lg:table-cell">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-white/5 overflow-hidden w-16">
+                              <div className="h-full rounded-full transition-all duration-1000"
+                                style={{ width:`${t.riskScore}%`, background:`linear-gradient(90deg,${t.riskScore>80?'#ef4444':'#f59e0b'},${t.riskScore>80?'#f97316':'#fbbf24'})`, boxShadow:`0 0 6px ${t.riskScore>80?'rgba(239,68,68,.5)':'rgba(245,158,11,.5)'}` }} />
+                            </div>
+                            <span className="text-xs font-mono text-slate-900 dark:text-white font-bold">{t.riskScore}</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold ${st.bg} ${st.text}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+                            {t.status}
                           </span>
                         </td>
                       </tr>

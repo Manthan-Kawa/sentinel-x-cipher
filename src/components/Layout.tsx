@@ -67,44 +67,44 @@ const SEARCHABLE_ITEMS: SearchableItem[] = [
   },
   {
     id: 'email-analyzer',
-    title: 'Email Analyzer',
+    title: 'PCAP Analyzer',
     category: 'Forensic Tool',
     route: 'email-analyzer',
-    description: 'AI-assisted email analysis, raw EML parser, BEC & phishing detection',
-    keywords: ['email analyzer', 'analyzer', 'eml', 'upload', 'paste', 'bec', 'phishing', 'spoofing', 'new analysis', 'scan email'],
+    description: 'AI-assisted PCAP analysis, TCP stream reconstruction, TLS handshake parsing & cipher scoring',
+    keywords: ['pcap analyzer', 'pcap', 'upload', 'pcapng', 'tls', 'handshake', 'cipher', 'new analysis', 'scan session'],
     icon: MailSearch,
     badgeColor: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
     roles: ['analyst'],
   },
   {
     id: 'header-forensics',
-    title: 'Header Forensics',
+    title: 'Crypto Forensics',
     category: 'Forensic Tool',
     route: 'header-forensics',
-    description: 'SMTP relay hops, RFC-5322 header inspection & SPF/DKIM/DMARC auth',
-    keywords: ['header forensics', 'headers', 'smtp', 'relay', 'hops', 'spf', 'dkim', 'dmarc', 'received', 'authentication'],
+    description: 'TLS handshake details, Client/Server Hello inspection & cipher suite analysis',
+    keywords: ['crypto forensics', 'tls forensics', 'handshake', 'client hello', 'server hello', 'cipher', 'starttls', 'certificate exchange'],
     icon: FileSearch,
     badgeColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
     roles: ['analyst'],
   },
   {
     id: 'threat-intelligence',
-    title: 'Threat Intelligence',
+    title: 'Certificate Vault',
     category: 'Telemetry',
     route: 'threat-intelligence',
-    description: 'IP & domain reputation lookup, WHOIS records, DNS & homoglyph analysis',
-    keywords: ['threat intelligence', 'intel', 'ip lookup', 'domain reputation', 'whois', 'dns', 'homoglyph', 'lookalike', 'ioc', 'reputation'],
+    description: 'X.509 certificate inspection, expired cert detection, weak RSA key alerts & cipher grading',
+    keywords: ['certificate vault', 'x509', 'certificates', 'tls cert', 'expired', 'rsa', 'weak key', 'cipher grade', 'ocsp', 'ca chain'],
     icon: Globe2,
     badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
     roles: ['analyst'],
   },
   {
     id: 'origin-investigation',
-    title: 'Origin Investigation',
+    title: 'Session Mapping',
     category: 'Telemetry',
     route: 'origin-investigation',
-    description: 'Interactive global geolocation map, infrastructure nodes & originating IP trace',
-    keywords: ['origin investigation', 'origin', 'geo', 'geolocation', 'map', 'infrastructure', 'ip location', 'trace', 'sending ip'],
+    description: 'Interactive global network session map, MitM node geolocation & SMTP relay path tracing',
+    keywords: ['session mapping', 'session map', 'geo', 'geolocation', 'map', 'smtp relay', 'mitm', 'ip trace', 'network path'],
     icon: MapPin,
     badgeColor: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
     roles: ['analyst'],
@@ -122,11 +122,11 @@ const SEARCHABLE_ITEMS: SearchableItem[] = [
   },
   {
     id: 'campaigns',
-    title: 'Campaign Intelligence',
+    title: 'TLS Campaign Intelligence',
     category: 'Module',
     route: 'campaigns',
-    description: 'Correlated threat clusters, multi-vector campaign tracking & attack grouping',
-    keywords: ['campaigns', 'campaign intelligence', 'clusters', 'threat cluster', 'create campaign', 'active clusters'],
+    description: 'Correlated TLS downgrade clusters, cipher weakness campaigns & multi-session attack grouping',
+    keywords: ['tls campaigns', 'campaign intelligence', 'clusters', 'downgrade campaign', 'cipher cluster', 'weak cipher group', 'active clusters'],
     icon: Network,
     badgeColor: 'text-pink-400 bg-pink-500/10 border-pink-500/30',
     roles: ['analyst'],
@@ -144,11 +144,11 @@ const SEARCHABLE_ITEMS: SearchableItem[] = [
   },
   {
     id: 'alerts',
-    title: 'Security Alerts',
+    title: 'Cryptographic Alerts',
     category: 'Module',
     route: 'alerts',
-    description: 'Real-time threat detection feed, SOC triage queue & alert status management',
-    keywords: ['alerts', 'security alerts', 'notifications', 'soc triage', 'feed', 'new alerts', 'severity queue'],
+    description: 'Real-time cipher vulnerability feed, TLS downgrade detection & SOC triage queue',
+    keywords: ['crypto alerts', 'tls alerts', 'cipher alerts', 'notifications', 'soc triage', 'feed', 'new alerts', 'downgrade alerts'],
     icon: Bell,
     badgeColor: 'text-red-400 bg-red-500/10 border-red-500/30',
     roles: ['analyst'],
@@ -166,11 +166,11 @@ const SEARCHABLE_ITEMS: SearchableItem[] = [
   },
   {
     id: 'submit-report',
-    title: 'Submit Report',
+    title: 'Submit PCAP',
     category: 'Page',
     route: 'submit-report',
-    description: 'Upload a suspicious .eml file and submit it for analyst review',
-    keywords: ['submit', 'report', 'upload', 'eml', 'ticket', 'suspicious email'],
+    description: 'Upload a .pcap or .pcapng capture file and submit it for cryptographic posture analysis',
+    keywords: ['submit', 'pcap', 'upload', 'pcapng', 'ticket', 'network capture', 'submit pcap'],
     icon: Upload,
     badgeColor: 'text-blue-400 bg-blue-500/10 border-blue-500/30',
     roles: ['user'],
@@ -233,20 +233,22 @@ export function Sidebar({ activeId, onNavigate, onSignOut, mobileOpen, onMobileC
           }`}
       >
         <div
-          className="soc-sidebar-header relative h-[88px] flex items-center justify-between pl-4 pr-3 shrink-0 border-b border-slate-200 dark:border-white/[0.06]"
+          className="soc-sidebar-header relative h-[94px] flex flex-col justify-center px-4 shrink-0 border-b border-slate-200 dark:border-white/[0.06]"
         >
-          <TransparentLogo
-            src={isDark ? "/Logo-SentinelX.PNG" : "/Logo-SentinelX-black.png"}
-            alt="SENTINEL-X"
-            className="h-[60px] max-w-[232px] w-auto object-contain drop-shadow-[0_0_12px_rgba(6,182,212,0.25)] transition-transform hover:scale-105"
-          />
-          <button
-            onClick={onMobileClose}
-            className="p-1.5 rounded-lg lg:hidden text-slate-400 hover:text-slate-900 dark:text-base-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-            title="Close menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center justify-between w-full">
+            <TransparentLogo
+              src={isDark ? "/Logo-SentinelX.PNG" : "/Logo-SentinelX-black.png"}
+              alt="SENTINEL-X"
+              className="h-[46px] max-w-[200px] w-auto object-contain drop-shadow-[0_0_12px_rgba(6,182,212,0.25)] transition-transform hover:scale-105"
+            />
+            <button
+              onClick={onMobileClose}
+              className="p-1.5 rounded-lg lg:hidden text-slate-400 hover:text-slate-900 dark:text-base-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              title="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto scrollbar-thin py-4 px-3 space-y-0.5">
@@ -906,10 +908,7 @@ export function TopBar({ onMenuClick, onNavigate, mobileOpen }: TopBarProps) {
       fireToast(n);
 
       if (emailNotifEnabled) {
-        NotificationRulesService.sendSampleEmailNotification(
-          userMail,
-          `Forensic investigation finished for case ${newAnalyzedTicket.id}. Detailed threat summary and mitigations are now accessible in your dashboard.`
-        );
+        NotificationRulesService.sendSampleEmailNotification(userMail);
       }
     }
     prevAnalyzedTicketsRef.current = currentAnalyzed.map((t) => t.id);
@@ -1307,6 +1306,7 @@ export function TopBar({ onMenuClick, onNavigate, mobileOpen }: TopBarProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-3 shrink-0">
+
         {/* Alerts ticker — analyst only */}
         {isAnalyst && currentAlert && (
           <div

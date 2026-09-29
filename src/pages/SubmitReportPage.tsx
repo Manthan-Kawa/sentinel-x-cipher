@@ -11,71 +11,71 @@ interface SubmitReportPageProps {
   onNavigate: (id: string) => void;
 }
 
-/* ── EML export instructions ─────────────────────────────────────── */
-const EML_INSTRUCTIONS = [
+/* ── PCAP export instructions ─────────────────────────────────────── */
+const PCAP_INSTRUCTIONS = [
   {
-    client: 'Gmail',
-    icon: '📧',
-    color: 'text-red-600 dark:text-red-400',
-    border: 'border-red-500/20',
-    bg: 'rgba(239,68,68,0.05)',
-    steps: [
-      'Open the suspicious email in Gmail.',
-      'Click the three-dot menu (⋮) in the top-right of the email.',
-      'Select "Download message".',
-      'The file will download as a .eml file.',
-    ],
-  },
-  {
-    client: 'Outlook (Desktop)',
-    icon: '📨',
-    color: 'text-blue-600 dark:text-blue-400',
-    border: 'border-blue-500/20',
-    bg: 'rgba(59,130,246,0.05)',
-    steps: [
-      'Open the suspicious email in Outlook.',
-      'Go to File → Save As.',
-      'In the "Save as type" dropdown, choose "Outlook Message Format - Unicode (*.msg)" or drag the email from the message list to your desktop.',
-      'For .eml specifically: drag and drop the email from the inbox list to your Desktop.',
-    ],
-  },
-  {
-    client: 'Outlook Web (OWA)',
-    icon: '🌐',
+    client: 'Wireshark (Desktop GUI)',
+    icon: '🦈',
     color: 'text-cyan-600 dark:text-cyan-400',
     border: 'border-cyan-500/20',
     bg: 'rgba(6,182,212,0.05)',
     steps: [
-      'Open the suspicious email.',
-      'Click the three-dot menu (…) at the top of the email.',
-      'Choose "View message source" or "Download" (availability varies by version).',
-      'Copy the raw source and save it with a .eml extension, or use the download option if available.',
+      'Open Wireshark and double-click your active network adapter (e.g. Wi-Fi or Ethernet).',
+      'Set display filter: "tls or tcp.port in {25, 465, 587, 993, 995}" to isolate mail/TLS sessions.',
+      'Perform or reproduce the connection, then click the red Stop Capture button.',
+      'Go to File → Export Specified Packets..., choose Wireshark/tcpdump (*.pcap or *.pcapng), and Save.',
     ],
   },
   {
-    client: 'Apple Mail',
-    icon: '🍎',
-    color: 'text-black dark:text-white',
-    border: 'border-slate-300 dark:border-gray-500/20',
-    bg: 'rgba(156,163,175,0.05)',
+    client: 'tcpdump (Linux / macOS CLI)',
+    icon: '🐧',
+    color: 'text-blue-600 dark:text-blue-400',
+    border: 'border-blue-500/20',
+    bg: 'rgba(59,130,246,0.05)',
     steps: [
-      'Open the suspicious email in Apple Mail.',
-      'Go to File → Save As.',
-      'In the format dropdown, choose "Raw Message Source".',
-      'Save the file — it will be in .eml format.',
+      'Open Terminal with root/sudo privileges.',
+      'Run: sudo tcpdump -i any -s 0 -w session.pcap "tcp port 465 or tcp port 587 or tcp port 993"',
+      'Execute the email / TLS client session.',
+      'Press Ctrl + C when finished. The generated "session.pcap" file is ready to upload.',
     ],
   },
   {
-    client: 'Thunderbird',
-    icon: '⚡',
+    client: 'TShark (Terminal Network Analyzer)',
+    icon: '⚙️',
+    color: 'text-purple-600 dark:text-purple-400',
+    border: 'border-purple-500/20',
+    bg: 'rgba(147,51,234,0.05)',
+    steps: [
+      'Run: tshark -i any -f "tcp port 465 or 587 or 993" -w session_capture.pcap',
+      'Ensure the capture includes ClientHello, ServerHello, and Certificate packets.',
+      'Terminate capture with Ctrl + C.',
+      'Upload the resulting session_capture.pcap file.',
+    ],
+  },
+  {
+    client: 'Windows (pktmon / PowerShell)',
+    icon: '🪟',
     color: 'text-amber-600 dark:text-amber-400',
     border: 'border-amber-500/20',
     bg: 'rgba(245,158,11,0.05)',
     steps: [
-      'Open the suspicious email in Thunderbird.',
-      'Go to File → Save As → File.',
-      'Change the file extension to .eml if needed.',
-      'Click Save.',
+      'Open PowerShell as Administrator.',
+      'Add port filter: pktmon filter add -p 25 465 587 993 995',
+      'Start tracing: pktmon start --etw -p 0',
+      'Reproduce the connection, then run: pktmon stop',
+      'Convert to pcapng: pktmon pcapng PktMon.etl -o session.pcapng',
+    ],
+  },
+  {
+    client: 'Zeek / Network TAP / Appliance',
+    icon: '🛡️',
+    color: 'text-emerald-600 dark:text-emerald-400',
+    border: 'border-emerald-500/20',
+    bg: 'rgba(16,185,129,0.05)',
+    steps: [
+      'Extract the packet slice from your sensor ring buffer matching the target IP/ports.',
+      'Verify that full TLS handshake frames and X.509 cert chains are intact.',
+      'Export the slice as standard .pcap or .pcapng and upload here.',
     ],
   },
 ];
@@ -123,8 +123,10 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(async (file: File) => {
-    if (!file.name.toLowerCase().endsWith('.eml')) {
-      setError('Please upload a .eml file.');
+    const lower = file.name.toLowerCase();
+    const isAllowed = lower.endsWith('.pcap') || lower.endsWith('.pcapng') || lower.endsWith('.cap') || lower.endsWith('.eml');
+    if (!isAllowed) {
+      setError('Please upload a .pcap, .pcapng, or .cap network capture file.');
       return;
     }
     setError('');
@@ -149,7 +151,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
 
   async function handleSubmit() {
     if (!emlFile && !comment.trim()) {
-      setError('Please attach a .eml file or provide notes describing the suspicious email.');
+      setError('Please attach a .pcap capture file or provide notes describing the network session.');
       return;
     }
     if (!currentUser) { setError('You must be logged in.'); return; }
@@ -158,18 +160,18 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
 
     let finalEml = emlFile;
     if (!finalEml) {
-      const synthetic = `From: ${currentUser.email}\nTo: sentinelx.analyst@gmail.com\nSubject: Mobile Reported Incident - ${new Date().toLocaleDateString()}\nDate: ${new Date().toUTCString()}\nContent-Type: text/plain; charset=utf-8\n\n${comment.trim()}`;
+      const synthetic = `Session Capture: Client -> Mail Relay\nUser: ${currentUser.email}\nTimestamp: ${new Date().toUTCString()}\nNotes: ${comment.trim()}\nProtocol: SMTP/IMAP TLS Handshake`;
       finalEml = {
-        name: `mobile_report_${Date.now().toString().slice(-4)}.eml`,
-        data: `data:message/rfc822;base64,${btoa(unescape(encodeURIComponent(synthetic)))}`,
-        type: 'message/rfc822',
+        name: `capture_session_${Date.now().toString().slice(-4)}.pcap`,
+        data: `data:application/octet-stream;base64,${btoa(unescape(encodeURIComponent(synthetic)))}`,
+        type: 'application/vnd.tcpdump.pcap',
         size: synthetic.length,
       };
     }
 
     const caseId = await submitTicket({
       userEmail: currentUser.email,
-      userComment: comment.trim() || 'Suspicious email report submitted from mobile device.',
+      userComment: comment.trim() || 'Network PCAP capture session submitted for cryptographic analysis.',
       emlFile: finalEml,
       priority: isUrgent ? 'critical' : clickedLink ? 'high' : 'medium',
       didInteract: {
@@ -236,10 +238,10 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
             >
               <Upload className="w-4.5 h-4.5 text-blue-500 dark:text-blue-400" />
             </div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Submit a Report</h1>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Submit PCAP Capture</h1>
           </div>
           <p className="text-slate-500 dark:text-gray-400 text-sm">
-            Upload a suspicious .eml email file for our security analysts to investigate.
+            Upload a network traffic capture (.pcap, .pcapng, .cap) for our security analysts to assess cryptographic security posture.
           </p>
         </div>
       </SlideIn>
@@ -269,7 +271,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".eml,.EML,message/rfc822"
+            accept=".pcap,.pcapng,.cap,.eml,application/vnd.tcpdump.pcap,application/octet-stream"
             className="hidden"
             onChange={handleInputChange}
           />
@@ -285,7 +287,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{emlFile.name}</p>
-                <p className="text-xs text-slate-400 dark:text-gray-500 mt-0.5">{formatBytes(emlFile.size)} · .eml</p>
+                <p className="text-xs text-slate-400 dark:text-gray-500 mt-0.5">{formatBytes(emlFile.size)} · Network Capture</p>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setEmlFile(null); }}
@@ -304,14 +306,14 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
                 <Paperclip className="w-7 h-7 text-slate-400 dark:text-gray-500" />
               </div>
               <div>
-                <p className="text-slate-700 dark:text-white font-semibold text-sm">Drop your .eml file here</p>
-                <p className="text-slate-400 dark:text-gray-500 text-xs mt-1">or click to browse</p>
+                <p className="text-slate-700 dark:text-white font-semibold text-sm">Drop your .pcap file here</p>
+                <p className="text-slate-400 dark:text-gray-500 text-xs mt-1">or click to browse (.pcap, .pcapng, .cap)</p>
               </div>
               <span
                 className="px-3 py-1 rounded-full text-[10px] font-bold text-blue-600 dark:text-blue-400"
                 style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}
               >
-                .EML files only
+                .PCAP &amp; .PCAPNG captures (Max 50MB)
               </span>
             </div>
           )}
@@ -328,7 +330,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
         </div>
       )}
 
-      {/* How to export .eml — collapsible instructions */}
+      {/* How to export .pcap — collapsible instructions */}
       <SlideIn delay={100} direction="up">
         <div
           className="rounded-2xl overflow-hidden"
@@ -337,11 +339,11 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
           <div className="px-5 py-3 flex items-center gap-2 border-b border-slate-200 dark:border-white/5">
             <HelpCircle className="w-4 h-4 text-slate-400 dark:text-gray-400" />
             <span className="text-xs font-bold text-slate-500 dark:text-gray-300 uppercase tracking-wider">
-              How to export a .eml file
+              How to capture &amp; export network traffic (.pcap)
             </span>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-white/[0.05]">
-            {EML_INSTRUCTIONS.map((client) => {
+            {PCAP_INSTRUCTIONS.map((client) => {
               const open = expandedClient === client.client;
               return (
                 <div key={client.client}>
@@ -395,7 +397,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Describe any suspicious behaviour, why you think this email is malicious, any context that may help the analyst…"
+            placeholder="Describe any suspicious behavior, weak ciphers observed, handshake anomalies, or context to help the security analyst…"
             rows={4}
             className="w-full px-4 py-3 rounded-xl text-sm text-slate-800 dark:text-gray-200 placeholder-slate-400 dark:placeholder-gray-600 focus:outline-none resize-none transition-all bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10"
             onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.08)'; }}
@@ -411,7 +413,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
           className="p-4 rounded-2xl space-y-2.5 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.08]"
         >
           <p className="text-xs font-bold text-slate-500 dark:text-gray-300 uppercase tracking-wider">
-            Incident Severity &amp; Interaction (Helps SOC prioritize)
+            Incident Severity &amp; Cryptographic Observations
           </p>
           <div className="space-y-2 text-xs text-slate-600 dark:text-gray-300">
             <label className="flex items-center gap-2.5 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -421,7 +423,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
                 onChange={(e) => setClickedLink(e.target.checked)}
                 className="rounded accent-red-500 w-4 h-4 cursor-pointer"
               />
-              <span>I clicked a link or opened a web page inside this email</span>
+              <span>I observed certificate validity warnings or untrusted root errors</span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors">
               <input
@@ -430,7 +432,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
                 onChange={(e) => setEnteredCreds(e.target.checked)}
                 className="rounded accent-red-500 w-4 h-4 cursor-pointer"
               />
-              <span>I entered my password, credentials, or personal info</span>
+              <span>I suspect a TLS downgrade attack or unencrypted plaintext fallback</span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors">
               <input
@@ -439,7 +441,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
                 onChange={(e) => setIsUrgent(e.target.checked)}
                 className="rounded accent-amber-500 w-4 h-4 cursor-pointer"
               />
-              <span className="text-amber-600 dark:text-amber-300 font-semibold">Mark as Critical / Urgent triage request</span>
+              <span className="text-amber-600 dark:text-amber-300 font-semibold">Mark as Critical / Urgent cryptographic triage request</span>
             </label>
           </div>
         </div>
@@ -464,7 +466,7 @@ export function SubmitReportPage({ onNavigate }: SubmitReportPageProps) {
           ) : (
             <>
               <Send className="w-4 h-4" />
-              Submit Report
+              Submit PCAP for Analysis
             </>
           )}
         </button>

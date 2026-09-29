@@ -239,7 +239,7 @@ function CaseDetailModal({
             {[
               { icon: Hash, label: 'Case Number', value: ticket.id },
               { icon: Calendar, label: 'Date Submitted', value: formatDate(ticket.submittedAt) },
-              { icon: FileText, label: 'Uploaded EML', value: ticket.emlFile?.name ?? 'None' },
+              { icon: FileText, label: 'Capture File', value: ticket.emlFile?.name ?? 'None' },
               {
                 icon: isResolved ? CheckCircle2 : isAnalyzed ? ShieldCheck : Clock,
                 label: 'SOC Status',
@@ -279,16 +279,16 @@ function CaseDetailModal({
             >
               <AlertTriangle className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0" />
               <p className="text-xs text-red-700 dark:text-red-300">
-                You reported interacting with this email ({ticket.didInteract.clickedLink ? 'Clicked Link' : ''} {ticket.didInteract.enteredCreds ? '• Entered Credentials' : ''}). Please review analyst actions below.
+                You reported observing security alerts or certificate warnings during this session. Please review analyst actions below.
               </p>
             </div>
           )}
 
-          {/* Uploaded EML file download */}
+          {/* Uploaded capture file download */}
           {ticket.emlFile && (
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-3 h-3" /> Submitted Email File (.eml)
+                <FileText className="w-3 h-3" /> Submitted Capture File (.pcap)
               </label>
               <button
                 onClick={() => downloadAttachment(ticket.emlFile!.data, ticket.emlFile!.name)}

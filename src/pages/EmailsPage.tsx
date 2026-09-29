@@ -114,12 +114,16 @@ export function EmailsPage({ onNavigate }: EmailsPageProps) {
 
   const handleDisconnectGmail = () => {
     disconnectGoogle();
-    UserNotificationService.addUserNotification({
-      title: 'Gmail Disconnected',
-      message: 'Gmail account disconnected from Sentinel-X monitoring.',
-      category: 'system',
-      userEmail: currentUser?.email,
-    });
+    if (currentUser?.email) {
+      UserNotificationService.addUserNotification(currentUser.email, {
+        id: `notif-gmail-disc-${Date.now()}`,
+        title: 'Gmail Disconnected',
+        msg: 'Gmail account disconnected from Sentinel-X monitoring.',
+        category: 'system',
+        sev: 'info',
+        route: 'emails',
+      });
+    }
     setSyncNotice('Gmail account disconnected successfully.');
     setTimeout(() => setSyncNotice(null), 4000);
   };

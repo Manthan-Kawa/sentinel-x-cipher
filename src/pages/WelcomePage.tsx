@@ -84,9 +84,15 @@ function useAuth() {
     }
 
     // Login mode
-    // Try Supabase auth first if available
+    // Try Supabase auth first if available, but cap at 2 s so a dead instance
+    // doesn't block the user — local USERS_DB acts as the offline fallback.
     try {
-      const supabaseRes = await SupabaseDataService.signInWithEmail(e, p);
+      const supabaseRes = await Promise.race([
+        SupabaseDataService.signInWithEmail(e, p),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('supabase_timeout')), 2000)
+        ),
+      ]);
       if (supabaseRes.success && supabaseRes.role) {
         const resolvedRole = deriveRoleFromEmail(e);
         const hashedPassword = await hashPassword(p);
@@ -98,7 +104,7 @@ function useAuth() {
         return { success: true, role: resolvedRole };
       }
     } catch {
-      // Fallback to local DB check
+      // Supabase unavailable or timed out — fallback to local DB
     }
 
     // Check stored accounts (USERS_DB + previously registered)
@@ -298,6 +304,8 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
           ))}
         </div>
 
+
+
         {/* Note on Sign Up */}
         {tab === 'signup' && (
           <div className="mb-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 flex items-center gap-2">
@@ -449,11 +457,10 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
   );
 }
 
-/* ─── Feature shortcuts ─── */
 const FEATURES = [
-  { icon: Mail, label: 'Email Analyzer', desc: 'Deep-scan suspicious emails in seconds', route: 'email-analyzer', demo: true },
-  { icon: Eye, label: 'Threat Intelligence', desc: 'Real-time IOC lookups & threat feeds', route: 'threat-intelligence', demo: false },
-  { icon: Zap, label: 'Header Forensics', desc: 'Expose forged routing & sender spoofing', route: 'header-forensics', demo: false },
+  { icon: Mail, label: 'PCAP Analyzer', desc: 'Deep-scan network captures & TLS handshakes', route: 'email-analyzer', demo: true },
+  { icon: Eye, label: 'Certificate Vault', desc: 'X.509 cert analysis & key strength assessment', route: 'threat-intelligence', demo: false },
+  { icon: Zap, label: 'Cryptographic Forensics', desc: 'Expose TLS downgrade attacks & weak ciphers', route: 'header-forensics', demo: false },
   { icon: Globe, label: 'Origin Investigation', desc: 'Geographic infrastructure & relay telemetry', route: 'origin-investigation', demo: false },
 ];
 

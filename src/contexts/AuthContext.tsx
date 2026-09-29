@@ -72,7 +72,11 @@ export function deriveRoleFromEmail(email: string): UserRole {
   const e = email.toLowerCase().trim();
   // Only dedicated SOC analyst accounts are granted 'analyst' role.
   // ALL new emails & Google sign-ins strictly receive 'user'.
-  if (e === 'sentinelx.analyst@gmail.com' || e === 'analyst@gmail.com') {
+  if (
+    e === 'sentinelx.analyst@gmail.com' ||
+    e === 'analyst@gmail.com' ||
+    e === 'demo.analyst@sentinelx.io'
+  ) {
     return 'analyst';
   }
   return 'user';
@@ -171,8 +175,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const email = localStorage.getItem(KEY_USER);
       let role = localStorage.getItem(KEY_USER_ROLE) as UserRole | null;
       if (email) {
-        if (!role) {
-          role = deriveRoleFromEmail(email);
+        const derived = deriveRoleFromEmail(email);
+        if (derived === 'analyst' || !role) {
+          role = derived;
           localStorage.setItem(KEY_USER_ROLE, role);
         }
         return buildUser(email, role);

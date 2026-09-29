@@ -405,7 +405,7 @@ function TicketModal({ ticket, onClose, onRespond }: ModalProps) {
           {ticket.emlFile && (
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 dark:text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-3 h-3" /> Submitted Email File (.eml)
+                <FileText className="w-3 h-3" /> Submitted Capture File (.pcap)
               </label>
               <button
                 onClick={() => downloadAttachment(ticket.emlFile!.data, ticket.emlFile!.name)}

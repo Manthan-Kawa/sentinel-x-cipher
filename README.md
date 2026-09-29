@@ -1,8 +1,8 @@
 # 🛡️ SENTINEL-X
 
-### AI-Powered Email Forensics & Threat Intelligence Platform
+### Sentinel-X: Cryptographic Posture Analyzer for Email Traffic
 
-**Smart India Hackathon (SIH) Prototype** — *AI-Powered Email Threat Detection, GeoLocation and Forensic Intelligence Platform*
+**Smart India Hackathon (SIH) Prototype** — *Cryptographic Security Posture Assessment & TLS/Cipher Forensics for Mail Gateways*
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://sentinel-x-defense.vercel.app/)
 [![Repo](https://img.shields.io/badge/github-repo-blue)](https://github.com/Manthan-Kawa/Sentinel-X)
@@ -16,16 +16,16 @@
 
 ## 📖 Overview
 
-**SENTINEL-X** is a premium, dark-themed enterprise SOC/forensic-style web application built as a prototype for the Smart India Hackathon problem statement on **AI-powered email threat detection, geolocation, and forensic intelligence**.
+**SENTINEL-X: Cryptographic Posture Analyzer for Email Traffic** is a premium, dark-themed enterprise SOC/forensic-style web application built for cryptographic security posture assessment of mail protocols (SMTP, IMAP, POP3).
 
-Rather than a generic dashboard, SENTINEL-X is designed to look and feel like a real Security Operations Center (SOC) tool — enabling analysts to ingest suspicious emails, detect threats with AI-explainable reasoning, trace network/geographic origin, correlate indicators into attack graphs, manage investigations, and preserve tamper-evident forensic evidence.
+Rather than inspecting message bodies, SENTINEL-X inspects network captures (`.pcap` / `.pcapng`), reconstructs TCP streams, deconstructs TLS handshakes (ClientHello, ServerHello, Certificate Exchange), detects **Downgrade Attacks**, flags **Weak Ciphers**, and identifies **Man-in-the-Middle (MitM)** proxies and STARTTLS stripping in-flight.
 
-> All data in this prototype is **synthetic/mock data**, generated for demonstration purposes. No real email content, IPs, or attacker data are used.
+> All data in this prototype is **synthetic/mock network session telemetry**, generated for demonstration purposes.
 
 ### Core Demo Flow
 
 ```
-Email → Detect → Explain → Trace → Correlate → Investigate → Preserve → Report
+Reconstruct TCP Streams → Detect STARTTLS → Parse TLS Handshakes → Validate X.509 Certificates → Score Ciphers → Correlate Sessions → Preserve Evidence → Cryptographic Posture Report
 ```
 
 ---
@@ -33,53 +33,56 @@ Email → Detect → Explain → Trace → Correlate → Investigate → Preserv
 ## ✨ Key Features
 
 ### 🖥️ Dashboard
-- KPI cards: Emails Analyzed, Threats Detected, Critical Threats, Active Investigations, Model Accuracy, Campaigns
-- Threat distribution charts and activity timeline
-- Recent threats feed
-- World map of **probable infrastructure locations**
+- KPI cards: PCAP Sessions Analyzed, Crypto Weaknesses Found, Critical Vulnerabilities, Active Investigations, Cryptographic Posture Score
+- TLS Version Distribution (TLS 1.3, TLS 1.2, TLS 1.0)
+- Top Vulnerable Cipher Suites & Cryptographic Posture Trend
+- World map of **observed routing infrastructure & MitM proxies**
 
-### 📧 Email Analyzer
-- Drag-and-drop `.eml` upload
-- **Load Demo Email** button with a simulated analysis animation
-- Sample verdict: `Risk 96/100 | BEC | CRITICAL | Confidence 94.7%`
-- Explainable risk factors, including:
-  - Sender impersonation
-  - Lookalike domain
-  - SPF / DKIM / DMARC failure
-  - Suspicious URL
-  - Social engineering indicators
+### 📦 PCAP Ingestion & Analysis
+- Drag-and-drop `.pcap` / `.pcapng` upload
+- **Load Demo PCAP Session** button with live 8-stage progress reconstruction:
+  - Reconstructing TCP Streams...
+  - Detecting STARTTLS Negotiations...
+  - Parsing TLS Handshakes...
+  - Validating X.509 Certificates...
+- Sample verdict: `Risk 96/100 | Downgrade Attack | CRITICAL | Confidence 94.7%`
+- Explainable cryptographic risk factors:
+  - Deprecated TLS 1.0 protocol negotiation
+  - Prohibited cipher suite (RC4 / 3DES / CBC padding oracle)
+  - Expired and self-signed X.509 digital certificates
+  - Insecure public keys (RSA-1024 below NIST thresholds)
+  - Absence of Ephemeral Key Exchange (No Forward Secrecy)
 - Clear separation between **Observed Facts** and **AI Inference**
 
-### 🔍 Header Forensics
-- From, Reply-To, Return-Path, Message-ID inspection
-- SPF / DKIM / DMARC authentication results
-- SMTP relay timeline — IP, hostname, timestamp, country, ASN, and confidence per hop
+### 🔍 Cryptographic Forensics
+- TLS Handshake sequence visualization: ClientHello, ServerHello, Certificate, ServerKeyExchange, ChangeCipherSpec
+- Cryptographic Guardrails compliance status (TLS Version Policy, Cipher Suite Strength, Certificate Trust)
+- SMTP transport hop telemetry and cipher parameter inspection
 
-### 🌐 Threat Intelligence
-- IP, domain, and URL reputation lookups
-- ASN and hosting provider details
-- DNS records and related indicators
-- Lookalike-domain similarity scoring
+### 🛡️ Certificate Vault
+- Comprehensive X.509 digital certificate catalog
+- Expiration date tracking and automated overdue alerts
+- Public key strength analysis (highlighting sub-2048-bit RSA keys and weak signature hashes)
+- CA issuer chain verification and OCSP stapling status
 
-### 📍 Origin Investigation
-- Interactive map with an **Origin Confidence Engine**
-- Careful, non-definitive language throughout: *"Probable Source Infrastructure"*, *"Observed Network Location"*
-- Never asserts an exact attacker location — confidence-based estimates only
+### 📍 Session Mapping & Origin Investigation
+- Interactive map tracking network hops and intermediate proxies
+- Geolocation of suspect autonomous systems (ASNs) associated with downgrade and interception activity
+- Confidence-based origin inference
 
 ### 🕸️ Attack Graph
 - Built with **React Flow**
-- Visualizes correlated entities: `Email → Domain → IP → Hosting → URL → Campaign → Case`
-- Zoom, pan, node selection, and detail inspection
+- Visualizes correlated network entities: `Session → Mail Server → Source IP → Host / Proxy → Cipher Suite → TLS Campaign → Case`
+- Interactive zoom, pan, and cryptographic attribute inspection
 
 ### 📁 Investigations & Evidence Vault
-- Case management with severity, status, and timeline tracking
-- Evidence Vault with SHA-256 hashing, timestamps, and case IDs
-- Simulated integrity chain: `Evidence → SHA-256 → Immutable Ledger → Integrity Verified`
-- Uses **mock blockchain-style ledger data** only
+- Cryptographic incident management with severity, status, and timeline tracking
+- Evidence Vault with SHA-256 session integrity hashing and immutable audit trails
+- Cryptographic posture compliance verification
 
 ### 📊 Reports & Sentinel AI
-- Conversational **Sentinel AI** assistant (e.g. "Why is this suspicious?", "Summarize this case")
-- Report previews for **Executive**, **Technical**, and **Forensic** audiences
+- Conversational **Sentinel AI** assistant specializing in TLS RFCs, cipher suites, and downgrade attack diagnostics
+- Posture assessment report exports for **Executive**, **Technical**, and **Cryptographic Auditor** audiences
 
 ---
 

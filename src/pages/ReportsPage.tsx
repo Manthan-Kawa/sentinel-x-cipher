@@ -40,6 +40,8 @@ import {
   Share2,
   Terminal,
   Copy,
+  Bell,
+  FileSearch,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -50,6 +52,8 @@ import {
   type InfraLocation,
   type AttackGraphNode as AGNode,
   type GraphNodeType,
+  CAMPAIGNS,
+  SECURITY_ALERTS,
 } from '@/data/mockData';
 import { CopyButton } from '@/components/CopyButton';
 import { DarkCyberMap } from '@/components/DarkCyberMap';
@@ -112,6 +116,8 @@ export type ReportContentTab =
   | 'threat-intel'
   | 'origin'
   | 'attack-graph'
+  | 'campaigns'
+  | 'alerts'
   | 'attachments';
 
 export function ReportsPage({ onNavigate }: { onNavigate?: (route: string) => void }) {
@@ -227,13 +233,13 @@ export function ReportsPage({ onNavigate }: { onNavigate?: (route: string) => vo
               }}
             >
               <MailSearch className="w-3.5 h-3.5" />
-              Analyze New Email
+              Analyze New PCAP
             </button>
           </div>
         </div>
       </SlideIn>
 
-      {/* ── If no emails have been analyzed yet ── */}
+      {/* ── If no PCAPs have been analyzed yet ── */}
       {analyzedReports.length === 0 ? (
         <SlideIn delay={60} direction="up">
           <div
@@ -246,9 +252,9 @@ export function ReportsPage({ onNavigate }: { onNavigate?: (route: string) => vo
             </div>
 
             <div className="max-w-md space-y-2">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">No Analyzed Emails in Session</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">No Analyzed PCAP Sessions</h3>
               <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed font-mono">
-                Upload or paste an email in the Email Analyzer. Once analyzed, reports with map location and attack graphs will automatically sync here.
+                Upload or analyze a .pcap network capture in the PCAP Analyzer. Once analyzed, cryptographic posture reports, map locations, and attack graphs will automatically sync here.
               </p>
             </div>
 
@@ -262,7 +268,7 @@ export function ReportsPage({ onNavigate }: { onNavigate?: (route: string) => vo
                 }}
               >
                 <MailSearch className="w-4 h-4" />
-                Go to Email Analyzer
+                Go to PCAP Analyzer
               </button>
               <button
                 onClick={loadDemoCase}
@@ -908,12 +914,13 @@ function FullReportPreview({
         />
         {[
           { id: 'all', label: 'Complete Forensic Report', icon: Shield },
-          { id: 'synthesis', label: 'AI Synthesis', icon: Sparkles },
-          { id: 'headers', label: 'Header Forensics', icon: FileCode },
-          { id: 'threat-intel', label: 'Threat Intelligence', icon: Globe },
-          { id: 'origin', label: 'Origin GeoIP', icon: MapPin },
+          { id: 'synthesis', label: 'PCAP Analyzer', icon: MailSearch },
+          { id: 'headers', label: 'Crypto Forensics', icon: FileSearch },
+          { id: 'threat-intel', label: 'Certificate Vault', icon: ShieldCheck },
+          { id: 'origin', label: 'Session Mapping', icon: MapPin },
           { id: 'attack-graph', label: 'Attack Graph', icon: Share2 },
-          { id: 'attachments', label: 'Attachment & Payload', icon: FileText },
+          { id: 'campaigns', label: 'TLS Campaigns', icon: Network },
+          { id: 'alerts', label: 'Crypto Alerts', icon: Bell },
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -936,14 +943,14 @@ function FullReportPreview({
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 1: AI SYNTHESIS & RISK NARRATIVE
+          SECTION 1: PCAP ANALYZER & AI SYNTHESIS
       ══════════════════════════════════════════════════════════════════════ */}
       {(activeTab === 'all' || activeTab === 'synthesis') && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-              1. Final AI Synthesis & Plain-Language Risk Narrative
+              1. PCAP Analyzer &amp; Cryptographic AI Synthesis
             </h2>
             <span className="text-xs text-slate-500 dark:text-gray-400 font-mono">
               Confidence: <span className="text-cyan-600 dark:text-cyan-400 font-bold">{result?.confidence ?? 95}%</span>
@@ -1037,13 +1044,13 @@ function FullReportPreview({
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 2: HEADER FORENSICS & HOP RELAYS
+          SECTION 2: CRYPTO FORENSICS & HANDSHAKE INTEGRITY
       ══════════════════════════════════════════════════════════════════════ */}
       {(activeTab === 'all' || activeTab === 'headers') && (
         <div className="space-y-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 flex items-center gap-2">
-            <FileCode className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-            2. Header Forensics & Hop-by-Hop Authentication
+            <FileSearch className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+            2. Crypto Forensics &amp; Protocol Handshake Integrity
           </h2>
 
           {/* Authentication Cards */}
@@ -1166,13 +1173,13 @@ function FullReportPreview({
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 3: THREAT INTELLIGENCE & REPUTATION
+          SECTION 3: CERTIFICATE VAULT & X.509 TRUST
       ══════════════════════════════════════════════════════════════════════ */}
       {(activeTab === 'all' || activeTab === 'threat-intel') && (
         <div className="space-y-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 flex items-center gap-2">
-            <Globe className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-            3. Threat Intelligence & External Blacklists
+            <ShieldCheck className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+            3. Certificate Vault &amp; X.509 Trust Validation
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -1308,14 +1315,14 @@ function FullReportPreview({
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 4: ORIGIN INVESTIGATION & GEOIP MAP
+          SECTION 4: SESSION MAPPING & INFRASTRUCTURE
       ══════════════════════════════════════════════════════════════════════ */}
       {(activeTab === 'all' || activeTab === 'origin') && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-              4. Origin Investigation & Infrastructure Geolocation
+              4. Session Mapping &amp; Infrastructure Geolocation
             </h2>
             <span className="text-[11px] font-mono text-slate-500 dark:text-gray-400">
               Target: <span className="text-slate-900 dark:text-white font-bold">{originCity}, {originCountry}</span> ({originLat.toFixed(4)}, {originLng.toFixed(4)})
@@ -1414,7 +1421,91 @@ function FullReportPreview({
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SECTION 6: ATTACHMENT & PAYLOAD FORENSICS
+          SECTION 6: TLS CAMPAIGNS & CORRELATED CLUSTERS
+      ══════════════════════════════════════════════════════════════════════ */}
+      {(activeTab === 'all' || activeTab === 'campaigns') && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 flex items-center gap-2">
+              <Network className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+              6. TLS Campaigns &amp; Correlated Cryptographic Clusters
+            </h2>
+            <span className="text-[11px] font-mono text-cyan-600 dark:text-cyan-400">
+              Active Campaigns Tracking
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {CAMPAIGNS.slice(0, 2).map((camp) => (
+              <div
+                key={camp.id}
+                className="p-5 rounded-2xl bg-white dark:bg-[#11121b] border border-slate-200 dark:border-white/10 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-cyan-500">{camp.id}</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{camp.name}</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20">
+                    {camp.severity}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-gray-400 leading-relaxed">{camp.description}</p>
+                <div className="flex items-center gap-4 text-[11px] font-mono text-slate-500 dark:text-gray-400 pt-2 border-t border-slate-100 dark:border-white/5">
+                  <span>Sessions: <strong className="text-slate-900 dark:text-white">{camp.emails}</strong></span>
+                  <span>IOCs: <strong className="text-slate-900 dark:text-white">{camp.indicators}</strong></span>
+                  <span>Confidence: <strong className="text-cyan-500">{camp.confidence}%</strong></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          SECTION 7: CRYPTO ALERTS & REAL-TIME THREAT DETECTIONS
+      ══════════════════════════════════════════════════════════════════════ */}
+      {(activeTab === 'all' || activeTab === 'alerts') && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-gray-300 flex items-center gap-2">
+              <Bell className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+              7. Crypto Alerts &amp; Real-Time Threat Detections
+            </h2>
+            <span className="text-[11px] font-mono text-cyan-600 dark:text-cyan-400">
+              Active Security Alerts
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {SECURITY_ALERTS.slice(0, 2).map((alr) => (
+              <div
+                key={alr.id}
+                className="p-4 rounded-2xl bg-white dark:bg-[#11121b] border border-slate-200 dark:border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3"
+              >
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-xs font-bold text-purple-400">{alr.id}</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/10 text-red-400 border border-red-500/20 font-mono">
+                      {alr.severity}
+                    </span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{alr.type}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-gray-500 font-mono">{alr.detected}</span>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-gray-400">{alr.summary}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <span className="text-[11px] font-mono text-cyan-400 font-bold block">{alr.source}</span>
+                  <span className="text-[10px] text-gray-500">{alr.status.toUpperCase()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          SECTION 8: HANDSHAKE PAYLOAD & PACKET FORENSICS
       ══════════════════════════════════════════════════════════════════════ */}
       {(activeTab === 'all' || activeTab === 'attachments') && (
         <AttachmentForensicsSection
@@ -1438,8 +1529,8 @@ function FullReportPreview({
             allAttachments: result?.attachments,
           }}
           rawAnalysisResult={result}
-          sectionTitle="Attachment Forensics & Embedded Payload Analysis"
-          sectionPrefix="6."
+          sectionTitle="Handshake Payload & Packet Stream Forensics"
+          sectionPrefix="8."
         />
       )}
     </div>

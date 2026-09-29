@@ -25,6 +25,10 @@ import {
   Cpu,
   Eye,
   ChevronRight,
+  MailSearch,
+  FileSearch,
+  Network,
+  Bell,
 } from 'lucide-react';
 import {
   EmailForensicsService,
@@ -45,14 +49,14 @@ import { SlideIn } from '@/components/SlideIn';
 import { useTheme } from '@/context/ThemeContext';
 
 const ANALYSIS_STEPS = [
-  { stage: 'Email',       label: 'Parsing email structure',              detail: 'Extracting headers, body, MIME parts, and attachments' },
-  { stage: 'Detect',      label: 'Running detection engines',            detail: 'SPF/DKIM validation, URL reputation, homoglyph check' },
-  { stage: 'Explain',     label: 'Generating risk explanation',          detail: 'Correlating signals into risk factors & confidence scores' },
-  { stage: 'Trace',       label: 'Tracing origin infrastructure',        detail: 'Resolving sending IP, ASN & geo-location' },
-  { stage: 'Correlate',   label: 'Correlating threat intelligence',       detail: 'Matching indicators against known campaign clusters' },
-  { stage: 'Investigate', label: 'Building attack graph',                detail: 'Linking domain, IP, campaign, and recipient entities' },
-  { stage: 'Preserve',    label: 'Preserving forensic evidence',         detail: 'Hashing payload SHA-256 and logging chain of custody' },
-  { stage: 'Report',      label: 'Compiling forensic analysis report',   detail: 'Finalizing classification, risk score & summary' },
+  { stage: 'Reconstructing TCP Streams',       label: 'Reconstructing TCP streams',            detail: 'Reassembling network packet streams and reordering TCP segments' },
+  { stage: 'Detecting STARTTLS Negotiations', label: 'Detecting STARTTLS negotiations',       detail: 'Scanning SMTP/IMAP/POP3 command channels for cleartext or stripped STARTTLS' },
+  { stage: 'Parsing TLS Handshakes',          label: 'Parsing TLS handshakes',                 detail: 'Deconstructing ClientHello, ServerHello, and negotiated cipher suites' },
+  { stage: 'Validating X.509 Certificates',   label: 'Validating X.509 certificates',          detail: 'Inspecting certificate chain, expiration, key length, and signature algorithm' },
+  { stage: 'Scoring Cipher Suites',           label: 'Scoring cryptographic posture',         detail: 'Evaluating forward secrecy, encryption algorithms, and downgrade risks' },
+  { stage: 'Correlating Sessions',            label: 'Correlating session infrastructure',    detail: 'Mapping IP infrastructure and threat intelligence campaign clusters' },
+  { stage: 'Preserving Evidence',             label: 'Preserving cryptographic evidence',     detail: 'Generating SHA-256 session hash and recording immutable audit trail' },
+  { stage: 'Generating Report',               label: 'Compiling posture assessment report',   detail: 'Finalizing posture assessment score and remediation plan' },
 ] as const;
 
 interface UserDeepForensicsPageProps {
@@ -67,7 +71,7 @@ export function UserDeepForensicsPage({ emailId, onNavigate }: UserDeepForensics
   const [report, setReport] = useState<DeepForensicsReport | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [progressStep, setProgressStep] = useState(0);
-  const [activeStage, setActiveStage] = useState<AnalysisStage>('Email');
+  const [activeStage, setActiveStage] = useState<AnalysisStage>('Reconstructing TCP Streams');
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'synthesis' | 'headers' | 'threat-intel' | 'origin' | 'attack-graph' | 'attachments'>('all');
   const reportTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -113,7 +117,7 @@ export function UserDeepForensicsPage({ emailId, onNavigate }: UserDeepForensics
     setIsAnalyzing(true);
     setLoadError(null);
     setProgressStep(0);
-    setActiveStage('Email');
+    setActiveStage('Reconstructing TCP Streams');
 
     // Run API call and step animation concurrently matching EmailAnalyzerPage speed (700ms per step)
     const STEP_MS = 700;
@@ -133,7 +137,7 @@ export function UserDeepForensicsPage({ emailId, onNavigate }: UserDeepForensics
       } else {
         if (mounted) {
           setProgressStep(TOTAL_STEPS - 1);
-          setActiveStage('Report');
+          setActiveStage('Generating Report');
         }
         clearInterval(interval);
         resolveAnimation();
@@ -670,12 +674,13 @@ export function UserDeepForensicsPage({ emailId, onNavigate }: UserDeepForensics
           />
           {[
             { id: 'all', label: 'Complete Forensic Report', icon: Shield },
-            { id: 'synthesis', label: 'AI Synthesis', icon: Sparkles },
-            { id: 'headers', label: 'Header Forensics', icon: FileCode },
-            { id: 'threat-intel', label: 'Threat Intelligence', icon: Globe },
-            { id: 'origin', label: 'Origin GeoIP', icon: MapPin },
+            { id: 'synthesis', label: 'PCAP Analyzer', icon: MailSearch },
+            { id: 'headers', label: 'Crypto Forensics', icon: FileSearch },
+            { id: 'threat-intel', label: 'Certificate Vault', icon: ShieldCheck },
+            { id: 'origin', label: 'Session Mapping', icon: MapPin },
             { id: 'attack-graph', label: 'Attack Graph', icon: Share2 },
-            { id: 'attachments', label: 'Attachment & Payload', icon: FileText },
+            { id: 'campaigns', label: 'TLS Campaigns', icon: Network },
+            { id: 'alerts', label: 'Crypto Alerts', icon: Bell },
           ].map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;

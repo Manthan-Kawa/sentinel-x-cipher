@@ -914,7 +914,10 @@ export class SupabaseDataService {
 
         if (!error && data.user) {
           const profile = await this.fetchProfile(cleanEmail);
-          const isMasterAnalyst = cleanEmail === 'sentinelx.analyst@gmail.com' || cleanEmail === 'analyst@gmail.com';
+          const isMasterAnalyst =
+            cleanEmail === 'sentinelx.analyst@gmail.com' ||
+            cleanEmail === 'analyst@gmail.com' ||
+            cleanEmail === 'demo.analyst@sentinelx.io';
           const resolvedRole: UserRole = isMasterAnalyst ? 'analyst' : 'user';
           return {
             success: true,
@@ -929,7 +932,10 @@ export class SupabaseDataService {
 
     // Local profile check
     const localProfile = await this.fetchProfile(cleanEmail);
-    const isMasterAnalyst = cleanEmail === 'sentinelx.analyst@gmail.com' || cleanEmail === 'analyst@gmail.com';
+    const isMasterAnalyst =
+      cleanEmail === 'sentinelx.analyst@gmail.com' ||
+      cleanEmail === 'analyst@gmail.com' ||
+      cleanEmail === 'demo.analyst@sentinelx.io';
     const role: UserRole = isMasterAnalyst ? 'analyst' : 'user';
     return {
       success: true,
@@ -952,7 +958,8 @@ export class SupabaseDataService {
 
     const isMasterAnalyst =
       cleanEmail === 'sentinelx.analyst@gmail.com' ||
-      cleanEmail === 'analyst@gmail.com';
+      cleanEmail === 'analyst@gmail.com' ||
+      cleanEmail === 'demo.analyst@sentinelx.io';
 
     // All new emails and Google sign-ins strictly receive 'user' role.
     // Only master SOC analyst accounts receive 'analyst'.

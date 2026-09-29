@@ -49,6 +49,10 @@ export function isHashedPassword(val?: string): boolean {
 }
 
 export const INITIAL_USERS_DB: StoredAccount[] = [
+  // ── Demo accounts (offline / Supabase-down fallback) ──────────────────
+  { email: 'demo.analyst@sentinelx.io', password: 'SentinelX@2025', method: 'email', originalProvider: 'email' },
+  { email: 'demo.user@sentinelx.io',   password: 'SentinelX@2025', method: 'email', originalProvider: 'email' },
+  // ── Legacy seed accounts ───────────────────────────────────────────────
   { email: 'sentinelx.analyst@gmail.com', password: 'password', method: 'email', originalProvider: 'email' },
   { email: 'analyst@gmail.com', password: 'password', method: 'email', originalProvider: 'email' },
   { email: 'demouser1@gmail.com', password: 'password', method: 'email', originalProvider: 'email' },
