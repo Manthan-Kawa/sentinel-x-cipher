@@ -495,36 +495,27 @@ export function EmailsPage({ onNavigate }: EmailsPageProps) {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="w-full lg:w-auto h-12 lg:h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+              className="w-full lg:w-auto h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 rounded-xl font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
               title="Refresh session telemetry"
             >
-              <RefreshCw className={`w-4 h-4 shrink-0 ${isRefreshing ? 'animate-spin text-cyan-500' : ''}`} />
-              <div className="flex flex-col sm:flex-row text-left leading-tight sm:leading-normal">
-                <span>Refresh</span>
-                <span className="sm:hidden text-[9px] text-slate-400 dark:text-slate-500">Telemetry</span>
-              </div>
+              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isRefreshing ? 'animate-spin text-cyan-500' : ''}`} />
+              <span className="whitespace-nowrap text-[11px] sm:text-xs">Refresh</span>
             </button>
 
             <button
               onClick={() => onNavigate('check-status')}
-              className="w-full lg:w-auto h-12 lg:h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95"
+              className="w-full lg:w-auto h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 rounded-xl font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all cursor-pointer active:scale-95"
             >
-              <ClipboardList className="w-4 h-4 text-violet-500 shrink-0" />
-              <div className="flex flex-col sm:flex-row sm:gap-1 text-left leading-tight sm:leading-normal">
-                <span>Check</span>
-                <span>Status</span>
-              </div>
+              <ClipboardList className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+              <span className="whitespace-nowrap text-[11px] sm:text-xs">Check Status</span>
             </button>
 
             <button
               onClick={() => onNavigate('submit-report')}
-              className="w-full lg:w-auto h-12 lg:h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-md shadow-cyan-500/20 transition-all cursor-pointer active:scale-95"
+              className="w-full lg:w-auto h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 rounded-xl font-bold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-md shadow-cyan-500/20 transition-all cursor-pointer active:scale-95"
             >
-              <Upload className="w-4 h-4 shrink-0" />
-              <div className="flex flex-col sm:flex-row sm:gap-1 text-left leading-tight sm:leading-normal">
-                <span>Submit</span>
-                <span>PCAP</span>
-              </div>
+              <Upload className="w-3.5 h-3.5 shrink-0" />
+              <span className="whitespace-nowrap text-[11px] sm:text-xs">Submit PCAP</span>
             </button>
           </div>
         </div>
