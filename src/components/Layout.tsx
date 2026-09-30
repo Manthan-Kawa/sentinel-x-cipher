@@ -89,17 +89,6 @@ const SEARCHABLE_ITEMS: SearchableItem[] = [
     roles: ['analyst'],
   },
   {
-    id: 'threat-intelligence',
-    title: 'Certificate Vault',
-    category: 'Telemetry',
-    route: 'threat-intelligence',
-    description: 'X.509 certificate inspection, expired cert detection, weak RSA key alerts & cipher grading',
-    keywords: ['certificate vault', 'x509', 'certificates', 'tls cert', 'expired', 'rsa', 'weak key', 'cipher grade', 'ocsp', 'ca chain'],
-    icon: Globe2,
-    badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-    roles: ['analyst'],
-  },
-  {
     id: 'origin-investigation',
     title: 'Session Mapping',
     category: 'Telemetry',
@@ -141,6 +130,17 @@ const SEARCHABLE_ITEMS: SearchableItem[] = [
     keywords: ['reports', 'forensic reports', 'pdf export', 'export', 'dossier', 'download', 'print report', 'summary report'],
     icon: FileText,
     badgeColor: 'text-teal-400 bg-teal-500/10 border-teal-500/30',
+    roles: ['analyst'],
+  },
+  {
+    id: 'threat-intelligence',
+    title: 'Certificate Vault',
+    category: 'Telemetry',
+    route: 'threat-intelligence',
+    description: 'X.509 certificate inspection, expired cert detection, weak RSA key alerts & cipher grading',
+    keywords: ['certificate vault', 'x509', 'certificates', 'tls cert', 'expired', 'rsa', 'weak key', 'cipher grade', 'ocsp', 'ca chain'],
+    icon: Globe2,
+    badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
     roles: ['analyst'],
   },
   {
@@ -1196,7 +1196,7 @@ export function TopBar({ onMenuClick, onNavigate, mobileOpen }: TopBarProps) {
         </button>
 
         <div
-          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl w-80 transition-all duration-200 bg-gray-50 dark:bg-white border border-gray-200 dark:border-gray-200 shadow-sm"
+          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg w-96 lg:w-[28rem] transition-all duration-200 bg-gray-50 dark:bg-white border border-gray-200 dark:border-gray-200 shadow-sm"
         >
           <Search className={`w-3.5 h-3.5 shrink-0 transition-colors ${searchOpen ? 'text-sky-500 dark:text-gray-500' : 'text-gray-500 dark:text-gray-500'}`} />
           <input
@@ -1233,10 +1233,10 @@ export function TopBar({ onMenuClick, onNavigate, mobileOpen }: TopBarProps) {
 
         {searchOpen && (
           <div
-            className="fixed md:absolute top-16 md:top-12 left-3 right-3 md:left-0 md:right-auto w-auto md:w-96 rounded-2xl p-2.5 md:p-2 z-50 shadow-2xl backdrop-blur-xl animate-fade-in bg-white dark:bg-black border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-100"
+            className="fixed md:absolute top-16 md:top-12 left-3 right-3 md:left-0 md:right-auto w-auto md:w-96 lg:w-[28rem] rounded-xl p-2.5 md:p-2 z-50 shadow-2xl backdrop-blur-xl animate-fade-in bg-white dark:bg-black border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-100"
           >
             {/* Mobile-only Search input field */}
-            <div className="md:hidden flex items-center gap-2 px-3 py-2 rounded-xl mb-2 bg-gray-50 dark:bg-white border border-gray-200 dark:border-gray-200 shadow-sm">
+            <div className="md:hidden flex items-center gap-2 px-3 py-2 rounded-lg mb-2 bg-gray-50 dark:bg-white border border-gray-200 dark:border-gray-200 shadow-sm">
               <Search className="w-3.5 h-3.5 text-gray-500 dark:text-gray-500 shrink-0" />
               <input
                 type="text"

@@ -19,6 +19,7 @@ import {
  X,
  Filter,
  type LucideIcon,
+  Link,
 } from 'lucide-react';
 import {
  type Severity,
@@ -379,6 +380,7 @@ function SlideIn({ children, delay = 0, direction = 'up', className = '' }: {
 export function CertificateVaultPage({ onNavigate }: { onNavigate?: (route: string) => void }) {
  const [tab, setTab] = useState<TabId>('certificates');
  const { currentResult } = useAnalysis();
+  const hasLive = Boolean(currentResult && (currentResult.case_id || currentResult.verdict));
  const [selectedCert, setSelectedCert] = useState<X509CertRecord | null>(null);
 
  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -421,147 +423,174 @@ export function CertificateVaultPage({ onNavigate }: { onNavigate?: (route: stri
  return (
  <div className="space-y-6" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
- {/* ── Page Header ── */}
- <SlideIn delay={0} direction="down">
- <div className="space-y-4">
- <div className="flex items-start gap-2.5 sm:gap-3">
- {onNavigate && (
- <button
- onClick={() => onNavigate('header-forensics')}
- className="mt-0.5 w-8 h-8 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl flex items-center justify-center text-blue-400 hover:text-blue-300 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
- style={{
- background: 'rgba(59, 130, 246, 0.05)',
- border: '1px solid rgba(59, 130, 246, 0.45)',
- boxShadow: '0 0 10px rgba(59, 130, 246, 0.15)',
- }}
- title="Back to Cryptographic Forensics"
- >
- <ArrowLeft className="w-4 h-4" />
- </button>
- )}
- <div className="min-w-0 flex-1">
- <div className="flex items-center gap-2">
- <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-snug">
- Certificate Vault
- </h2>
- <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-violet-500/10 text-violet-400 border -violet-500/30">
- X.509 Intelligence
- </span>
- </div>
- <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 leading-relaxed">
- Extracted X.509 digital certificates, root CA trust chains, validity monitoring &amp; public key strength evaluation
- </p>
- </div>
- </div>
+     {/* ── Page Header ── */}
+    <SlideIn delay={0} direction="down">
+      <div className="space-y-5">
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-snug">
+              Certificate Vault
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-zinc-300 mt-0.5 leading-relaxed font-medium">
+              Extracted X.509 digital certificates, root CA trust chains, validity monitoring & public key strength evaluation
+            </p>
+          </div>
+        </div>
 
- {/* ── Summary KPI Row ── */}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
- <div className="bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl p-3.5 dark: /[0.03] border dark: -white/[0.06] flex items-center justify-between">
- <div>
- <p className="text-[10px] font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">Tracked Certs</p>
- <p className="text-2xl font-black text-gray-900 dark:text-white font-mono mt-0.5">{totalCerts}</p>
- </div>
- <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-blue-500/10 border -blue-500/25 text-blue-500">
- <ShieldCheck className="w-4 h-4" />
- </div>
- </div>
+        {/* ── Synced from Session Analysis Banner (Matching Image 2) ── */}
+        {hasLive && currentResult && (
+          <div className="bg-gray-50 dark:bg-zinc-900/60 border border-gray-200 dark:border-zinc-800/80 rounded-2xl shadow-sm p-3.5 sm:p-4 overflow-hidden max-w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+                  <Link className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-zinc-400 font-bold leading-none mb-0.5">
+                    SYNCED FROM SESSION ANALYSIS
+                  </p>
+                  <p className="text-xs font-bold text-gray-900 dark:text-white font-mono truncate block" title={`${currentResult.case_id || 'CASE-2026-7240'} — mail.attacker.example (Untrusted Root CA)`}>
+                    <span>{currentResult.case_id || 'CASE-2026-7240'}</span>
+                    <span className="text-gray-600 dark:text-zinc-300 font-normal"> — mail.attacker.example (Untrusted Root CA)</span>
+                  </p>
+                </div>
+              </div>
 
- <div className="bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl p-3.5 bg-red-500/[0.04] border -red-500/20 flex items-center justify-between shadow-[0_0_12px_rgba(239,68,68,0.1)]">
- <div>
- <p className="text-[10px] font-mono uppercase tracking-wider text-red-600 dark:text-red-400 font-bold">Expired Certs</p>
- <p className="text-2xl font-black text-red-600 dark:text-red-400 font-mono mt-0.5">{expiredCount}</p>
- </div>
- <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-red-500/15 border -red-500/35 text-red-500 animate-pulse">
- <AlertTriangle className="w-4 h-4" />
- </div>
- </div>
+              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                <span
+                  className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold uppercase shrink-0 whitespace-nowrap text-white shadow-sm border border-white/10"
+                  style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
+                >
+                  {currentResult.alert_level?.toUpperCase() || 'UNTRUSTED ROOT'}
+                </span>
+                <span
+                  className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold text-white shadow-sm border border-white/10 shrink-0 whitespace-nowrap"
+                  style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}
+                >
+                  Trust Score: {typeof currentResult.threat_score === 'number' ? currentResult.threat_score : 14}/100
+                </span>
+                <span
+                  className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold text-white shadow-sm border border-white/10 shrink-0 whitespace-nowrap"
+                  style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
+                >
+                  Key: RSA-1024
+                </span>
+                <span
+                  className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold text-white shadow-sm border border-white/10 shrink-0 whitespace-nowrap"
+                  style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
+                >
+                  Validity: EXPIRED
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
- <div className="bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl p-3.5 bg-amber-500/[0.04] border -amber-500/20 flex items-center justify-between">
- <div>
- <p className="text-[10px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold">Weak Keys (&lt;2048b)</p>
- <p className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5">{weakKeysCount}</p>
- </div>
- <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-amber-500/15 border -amber-500/35 text-amber-500">
- <Key className="w-4 h-4" />
- </div>
- </div>
+{/* ── Summary KPI Row (White Icon Boxes in Dark Mode) ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-gray-600 dark:text-zinc-400 font-semibold">Tracked Certs</p>
+              <p className="text-2xl font-black text-gray-900 dark:text-white font-mono mt-0.5">{totalCerts}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-sm shrink-0 border border-gray-100 dark:border-white/10">
+              <ShieldCheck className="w-5 h-5 text-blue-600" />
+            </div>
+          </div>
 
- <div className="bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl p-3.5 bg-orange-500/[0.04] border -orange-500/20 flex items-center justify-between">
- <div>
- <p className="text-[10px] font-mono uppercase tracking-wider text-orange-600 dark:text-orange-400 font-bold">Self-Signed / Untrusted</p>
- <p className="text-2xl font-black text-orange-600 dark:text-orange-400 font-mono mt-0.5">{selfSignedCount}</p>
- </div>
- <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-orange-500/15 border -orange-500/35 text-orange-500">
- <Lock className="w-4 h-4" />
- </div>
- </div>
- </div>
+          <div className="bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-red-600 dark:text-red-400 font-bold">Expired Certs</p>
+              <p className="text-2xl font-black text-red-600 dark:text-red-400 font-mono mt-0.5">{expiredCount}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-sm shrink-0 border border-gray-100 dark:border-white/10">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </div>
+          </div>
 
- {/* Active PCAP Session sync banner if result is present */}
- {currentResult && (
- <div className="bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl p-3 bg-gradient-to-r from-red-500/10 via-amber-500/5 to-transparent border -red-500/30 flex items-center justify-between gap-3">
- <div className="flex items-center gap-2.5 min-w-0">
- <div className="w-7 h-7 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center shrink-0">
- <ShieldAlert className="w-4 h-4" />
- </div>
- <div className="min-w-0">
- <p className="text-[10px] font-mono uppercase text-red-500 dark:text-red-400 font-bold">Active PCAP Session Certificate Detected</p>
- <p className="text-xs font-bold text-gray-900 dark:text-white truncate font-mono">
- mail.attacker.example · Self-Signed RSA-1024 (Expired Jan 01, 2024)
- </p>
- </div>
- </div>
- <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400 border -red-500/40 shrink-0">
- CRITICAL VIOLATION
- </span>
- </div>
- )}
- </div>
- </SlideIn>
+          <div className="bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold">Weak Keys (&lt;2048b)</p>
+              <p className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5">{weakKeysCount}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-sm shrink-0 border border-gray-100 dark:border-white/10">
+              <Key className="w-5 h-5 text-amber-600" />
+            </div>
+          </div>
+
+          <div className="bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl p-3.5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-orange-600 dark:text-orange-400 font-bold">Self-Signed / Untrusted</p>
+              <p className="text-2xl font-black text-orange-600 dark:text-orange-400 font-mono mt-0.5">{selfSignedCount}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-sm shrink-0 border border-gray-100 dark:border-white/10">
+              <Lock className="w-5 h-5 text-orange-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </SlideIn>
 
  {/* ── Interactive Tabbed Container ── */}
- <SlideIn delay={100} direction="up">
- <div className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-sm overflow-hidden border dark: -white/10 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
- {/* Tabs header with smooth sliding indicator pill */}
- <div className="relative isolate flex items-center gap-1 border-b dark: -white/10 p-1.5 sm:p-2 overflow-x-auto scrollbar-none touch-scroll">
- <div
- className="absolute z-0 pointer-events-none bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl bg-purple-500/15 dark:bg-purple-500/20 border border-purple-400/50 dark: -purple-500/40 "
- style={{
- transform: `translate3d(${indicatorStyle.left}px, ${indicatorStyle.top}px, 0)`,
- width: indicatorStyle.width,
- height: indicatorStyle.height,
- opacity: indicatorStyle.opacity,
- transition: 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), height 300ms cubic-bezier(0.25, 1, 0.5, 1), opacity 150ms ease',
- left: 0,
- top: 0,
- zIndex: 0,
- }}
- />
+      <SlideIn delay={100} direction="up">
+        <div className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-sm p-5 border dark:border-white/10 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          {/* Tabs header with segmented pill control (Matching 2nd image) */}
+          <div className="mb-5 border-b border-gray-200 dark:border-zinc-700/80 pb-5">
+            <div
+              className="relative inline-flex items-center gap-1 p-1 bg-gray-100 dark:bg-zinc-900/80 rounded-2xl border border-gray-200 dark:border-zinc-800/80 select-none overflow-x-auto scrollbar-none"
+              style={{ touchAction: 'pan-x' }}
+            >
+              {/* Solid blue sliding indicator */}
+              <div
+                className="absolute pointer-events-none rounded-xl bg-blue-600 shadow-sm"
+                style={{
+                  transform: `translate3d(${indicatorStyle.left}px, 0, 0)`,
+                  width: indicatorStyle.width,
+                  height: 'calc(100% - 8px)',
+                  top: '4px',
+                  opacity: indicatorStyle.opacity,
+                  transition: 'transform 250ms cubic-bezier(0.25, 1, 0.5, 1), width 250ms cubic-bezier(0.25, 1, 0.5, 1), opacity 150ms ease',
+                  left: 0,
+                  zIndex: 0,
+                }}
+              />
 
- {TABS.map((t) => {
- const Icon = t.icon;
- const isActive = tab === t.id;
- return (
- <button
- key={t.id}
- ref={(el) => { tabRefs.current[t.id] = el; }}
- onClick={() => setTab(t.id)}
- style={{ zIndex: 10 }}
- className={`relative z-10 shrink-0 flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-colors duration-200 whitespace-nowrap cursor-pointer ${
- isActive
- ? 'text-purple-700 dark:text-purple-300'
- : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
- }`}
- >
- <Icon className={`w-4 h-4 transition-colors duration-200 ${isActive ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 dark:text-gray-500'}`} />
- {t.label}
- </button>
- );
- })}
- </div>
+              {TABS.map((t) => {
+                const Icon = t.icon;
+                const isActive = tab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    ref={(el) => {
+                      tabRefs.current[t.id] = el;
+                      if (t.id === tab && el && indicatorStyle.opacity === 0) {
+                        setIndicatorStyle({
+                          left: el.offsetLeft,
+                          top: el.offsetTop,
+                          width: el.offsetWidth,
+                          height: el.offsetHeight,
+                          opacity: 1,
+                        });
+                      }
+                    }}
+                    onClick={() => setTab(t.id)}
+                    style={{ zIndex: 10 }}
+                    className={`relative z-10 shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-colors duration-200 whitespace-nowrap cursor-pointer ${
+                      isActive
+                        ? 'text-white'
+                        : 'text-gray-600 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white font-medium'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500 dark:text-zinc-400'}`} />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
- {/* Content area */}
- <div className="p-3.5 sm:p-6 overflow-hidden transition-all duration-300">
+          {/* Content area */}
+          <div className="overflow-hidden transition-all duration-300">
  {tab === 'certificates' && (
  <CertificatesTab
  onSelectCert={(c) => setSelectedCert(c)}
@@ -587,256 +616,295 @@ export function CertificateVaultPage({ onNavigate }: { onNavigate?: (route: stri
  TAB 1: X.509 CERTIFICATES VAULT
 ═══════════════════════════════════════════════════════════ */
 function CertificatesTab({
- onSelectCert,
- onInspectHandshake,
+  onSelectCert,
+  onInspectHandshake,
 }: {
- onSelectCert: (cert: X509CertRecord) => void;
- onInspectHandshake: () => void;
+  onSelectCert: (cert: X509CertRecord) => void;
+  onInspectHandshake: () => void;
 }) {
- const [search, setSearch] = useState('');
- const [filter, setFilter] = useState<'all' | 'expired' | 'weak' | 'self' | 'valid'>('all');
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'expired' | 'weak' | 'self' | 'valid'>('all');
 
- const filteredCerts = useMemo(() => {
- return CERTIFICATES_VAULT.filter((c) => {
- const q = search.toLowerCase();
- const matchSearch =
- c.subject.toLowerCase().includes(q) ||
- c.issuer.toLowerCase().includes(q) ||
- c.fingerprintSha256.toLowerCase().includes(q) ||
- c.cipherSuite.toLowerCase().includes(q);
+  const filterRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [filterIndicatorStyle, setFilterIndicatorStyle] = useState<{
+    left: number;
+    width: number;
+    opacity: number;
+  }>({ left: 0, width: 0, opacity: 0 });
 
- if (!matchSearch) return false;
- if (filter === 'expired') return c.isExpired;
- if (filter === 'weak') return c.isWeakKey;
- if (filter === 'self') return c.selfSigned;
- if (filter === 'valid') return !c.isExpired && !c.isWeakKey && !c.selfSigned;
- return true;
- });
- }, [search, filter]);
+  useLayoutEffect(() => {
+    const updateFilterIndicator = () => {
+      const currentEl = filterRefs.current[filter];
+      if (currentEl) {
+        setFilterIndicatorStyle({
+          left: currentEl.offsetLeft,
+          width: currentEl.offsetWidth,
+          opacity: 1,
+        });
+      }
+    };
+    updateFilterIndicator();
+    const rafId = requestAnimationFrame(updateFilterIndicator);
+    window.addEventListener('resize', updateFilterIndicator);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', updateFilterIndicator);
+    };
+  }, [filter]);
 
- return (
- <div className="space-y-5">
- {/* Search and Filters */}
- <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
- <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl px-3 py-2 flex-1 dark: /[0.04] border dark: -white/[0.08]">
- <Search className="w-4 h-4 text-gray-400 dark:text-gray-500" />
- <input
- type="text"
- placeholder="Search certificate by Common Name, SAN, Issuer, or Fingerprint..."
- value={search}
- onChange={(e) => setSearch(e.target.value)}
- className="bg-transparent text-xs text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none w-full font-mono"
- />
- </div>
+  const filteredCerts = useMemo(() => {
+    return CERTIFICATES_VAULT.filter((c) => {
+      const q = search.toLowerCase();
+      const matchSearch =
+        c.subject.toLowerCase().includes(q) ||
+        c.issuer.toLowerCase().includes(q) ||
+        c.fingerprintSha256.toLowerCase().includes(q) ||
+        c.cipherSuite.toLowerCase().includes(q);
 
- <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
- <Filter className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 ml-1 mr-0.5 shrink-0" />
- {(
- [
- { id: 'all', label: 'All Certs (7)' },
- { id: 'expired', label: 'Expired (2)' },
- { id: 'weak', label: 'Weak Key: <2048b (3)' },
- { id: 'self', label: 'Self-Signed (3)' },
- { id: 'valid', label: 'Valid / Compliant (2)' },
- ] as const
- ).map((f) => (
- <button
- key={f.id}
- onClick={() => setFilter(f.id)}
- className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 cursor-pointer ${
- filter === f.id
- ? 'text-purple-700 dark:text-purple-300'
- : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
- }`}
- style={
- filter === f.id
- ? { background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.35)' }
- : { background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)' }
- }
- >
- {f.label}
- </button>
- ))}
- </div>
- </div>
+      if (!matchSearch) return false;
+      if (filter === 'expired') return c.isExpired;
+      if (filter === 'weak') return c.isWeakKey;
+      if (filter === 'self') return c.selfSigned;
+      if (filter === 'valid') return !c.isExpired && !c.isWeakKey && !c.selfSigned;
+      return true;
+    });
+  }, [search, filter]);
 
- {/* Certificate Cards Grid */}
- <div className="space-y-4">
- {filteredCerts.map((cert) => {
- const isCrit = cert.severity === 'critical';
- const isHigh = cert.severity === 'high';
+  return (
+    <div className="space-y-5">
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* White-styled search bar matching topbar */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg flex-1 transition-all duration-200 bg-gray-50 dark:bg-white border border-gray-200 dark:border-gray-200 shadow-sm">
+          <Search className="w-4 h-4 text-gray-500 dark:text-gray-500 shrink-0" />
+          <input
+            type="text"
+            placeholder="Search certificate by Common Name, SAN, Issuer, or Fingerprint..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="bg-transparent text-xs text-gray-900 dark:text-gray-900 placeholder-slate-400 dark:placeholder-slate-400 focus:outline-none w-full font-mono"
+          />
+        </div>
 
- return (
- <div
- key={cert.id}
- className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-sm p-4 sm:p-5 transition-all duration-200 hover:shadow-lg relative overflow-hidden"
- style={{
- background: cert.isExpired
- ? 'linear-gradient(145deg, rgba(239,68,68,0.04), rgba(15,18,28,0.98))'
- : 'linear-gradient(145deg, rgba(255,255,255,0.02), rgba(15,18,28,0.98))',
- border: cert.isExpired
- ? '1px solid rgba(239,68,68,0.4)'
- : cert.isWeakKey
- ? '1px solid rgba(245,158,11,0.35)'
- : '1px solid rgba(255,255,255,0.08)',
- boxShadow: cert.isExpired ? '0 0 16px rgba(239,68,68,0.15)' : 'none',
- }}
- >
- {/* Top Row: Subject CN + Badges */}
- <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pb-3 border-b dark: -white/5">
- <div className="flex items-center gap-3">
- <div
- className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
- cert.isExpired
- ? 'bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse'
- : cert.isWeakKey
- ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
- : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
- }`}
- >
- {cert.isExpired ? (
- <AlertTriangle className="w-4 h-4" />
- ) : cert.isWeakKey ? (
- <Key className="w-4 h-4" />
- ) : (
- <ShieldCheck className="w-4 h-4" />
- )}
- </div>
- <div>
- <div className="flex items-center gap-2">
- <h4 className="text-sm font-bold text-gray-900 dark:text-white font-mono break-all">
- {cert.subject}
- </h4>
- <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">
- {cert.id}
- </span>
- </div>
- <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
- Session: {cert.protocolSession}
- </p>
- </div>
- </div>
+        {/* Filter segment matching squircle style */}
+        <div
+          className="relative inline-flex items-center gap-1 p-1 bg-gray-100 dark:bg-zinc-900/80 rounded-xl border border-gray-200 dark:border-zinc-800/80 select-none overflow-x-auto scrollbar-none"
+          style={{ touchAction: 'pan-x' }}
+        >
+          {/* Sliding solid blue indicator */}
+          <div
+            className="absolute pointer-events-none rounded-lg bg-blue-600 shadow-sm"
+            style={{
+              transform: `translate3d(${filterIndicatorStyle.left}px, 0, 0)`,
+              width: filterIndicatorStyle.width,
+              height: 'calc(100% - 8px)',
+              top: '4px',
+              opacity: filterIndicatorStyle.opacity,
+              transition: 'transform 250ms cubic-bezier(0.25, 1, 0.5, 1), width 250ms cubic-bezier(0.25, 1, 0.5, 1), opacity 150ms ease',
+              left: 0,
+              zIndex: 0,
+            }}
+          />
 
- {/* Status Badges */}
- <div className="flex items-center gap-1.5 flex-wrap">
- {cert.isExpired && (
- <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-red-500/20 text-red-400 border -red-500/40 flex items-center gap-1 ">
- <AlertTriangle className="w-3 h-3" />
- EXPIRED ({cert.expiry})
- </span>
- )}
- {cert.isWeakKey && (
- <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-amber-500/20 text-amber-400 border -amber-500/40 flex items-center gap-1">
- <Key className="w-3 h-3" />
- WEAK KEY: {cert.keyAlgo}-{cert.keyLength}
- </span>
- )}
- {cert.selfSigned && (
- <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-orange-500/20 text-orange-400 border -orange-500/40">
- SELF-SIGNED
- </span>
- )}
- {!cert.isExpired && !cert.isWeakKey && !cert.selfSigned && (
- <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/20 text-emerald-400 border -emerald-500/40">
- COMPLIANT ({cert.keyLength}b)
- </span>
- )}
- </div>
- </div>
+          {(
+            [
+              { id: 'all', label: 'All Certs (7)' },
+              { id: 'expired', label: 'Expired (2)' },
+              { id: 'weak', label: 'Weak Key: <2048b (3)' },
+              { id: 'self', label: 'Self-Signed (3)' },
+              { id: 'valid', label: 'Valid / Compliant (2)' },
+            ] as const
+          ).map((f) => {
+            const isActive = filter === f.id;
+            return (
+              <button
+                key={f.id}
+                ref={(el) => {
+                  filterRefs.current[f.id] = el;
+                  if (f.id === filter && el && filterIndicatorStyle.opacity === 0) {
+                    setFilterIndicatorStyle({
+                      left: el.offsetLeft,
+                      width: el.offsetWidth,
+                      opacity: 1,
+                    });
+                  }
+                }}
+                onClick={() => setFilter(f.id)}
+                style={{ zIndex: 10 }}
+                className={`relative z-10 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-200 shrink-0 cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? 'text-white'
+                    : 'text-gray-600 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white font-medium'
+                }`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
- {/* Expired Warning Callout Banner if Expired */}
- {cert.isExpired && (
- <div className="mt-3 p-2.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl bg-red-500/10 border -red-500/30 flex items-center gap-2.5 text-xs text-red-600 dark:text-red-400">
- <XCircle className="w-4 h-4 shrink-0" />
- <div>
- <span className="font-bold">CRITICAL CERTIFICATE EXPIRATION:</span> Expired on{' '}
- <span className="font-mono font-bold">{cert.expiry}</span> ({cert.daysExpired} days overdue). Remote peer accepted invalid, untrusted certificate during TLS handshake.
- </div>
- </div>
- )}
+      {/* Certificate Cards Grid */}
 
- {/* Weak Key Callout Banner if Weak */}
- {cert.isWeakKey && (
- <div className="mt-2.5 p-2.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl bg-amber-500/10 border -amber-500/30 flex items-center gap-2.5 text-xs text-amber-600 dark:text-amber-400">
- <AlertTriangle className="w-4 h-4 shrink-0" />
- <div>
- <span className="font-bold">INSECURE KEY LENGTH VIOLATION:</span> Public key length is only{' '}
- <span className="font-mono font-bold">{cert.keyLength} bits</span>. Violates NIST SP 800-131A requiring at least 2048-bit RSA for cryptographic confidentiality.
- </div>
- </div>
- )}
+      <div className="space-y-3.5">
+{filteredCerts.map((cert) => {
+          const isCrit = cert.severity === 'critical';
+          const isHigh = cert.severity === 'high';
 
- {/* Middle Row: Certificate Attributes Grid */}
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-3 text-xs">
- <div className="p-2.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl dark: /[0.02] border dark: -white/5">
- <span className="text-[10px] font-mono uppercase text-gray-500 dark:text-gray-400 font-bold block mb-1">
- Issuer / CA
- </span>
- <span className="font-semibold text-gray-900 dark:text-white break-all">
- {cert.issuer}
- </span>
- </div>
+          return (
+            <div
+              key={cert.id}
+              className="bg-gray-50 dark:bg-zinc-900/60 border border-gray-200 dark:border-zinc-800/80 rounded-2xl p-4 sm:p-5 transition-all duration-200 relative overflow-hidden"
+            >
+              {/* Top Row: Subject CN + Badges */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pb-3 border-b border-gray-200/60 dark:border-zinc-800/80">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-sm shrink-0 border border-gray-100 dark:border-white/10"
+                  >
+                    {cert.isExpired ? (
+                      <AlertTriangle className="w-5 h-5 text-red-600" />
+                    ) : cert.isWeakKey ? (
+                      <Key className="w-5 h-5 text-amber-600" />
+                    ) : (
+                      <ShieldCheck className="w-5 h-5 text-blue-600" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-gray-900 dark:text-white font-mono break-all">
+                        {cert.subject}
+                      </h4>
+                      <span className="text-[10px] text-gray-500 dark:text-zinc-400 font-mono font-medium">
+                        {cert.id}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-600 dark:text-zinc-300 font-mono mt-0.5 font-medium">
+                      Session: {cert.protocolSession}
+                    </p>
+                  </div>
+                </div>
 
- <div className="p-2.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl dark: /[0.02] border dark: -white/5">
- <span className="text-[10px] font-mono uppercase text-gray-500 dark:text-gray-400 font-bold block mb-1">
- Public Key &amp; Algorithm
- </span>
- <span className="font-mono font-semibold text-gray-900 dark:text-white">
- {cert.keyAlgo} {cert.keyLength}-bit ({cert.isWeakKey ? 'Insecure' : 'Adequate'})
- </span>
- </div>
+                {/* Status Badges */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {cert.isExpired && (
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase text-white shadow-sm border border-white/10 flex items-center gap-1" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}>
+                      <AlertTriangle className="w-3 h-3" />
+                      EXPIRED ({cert.expiry})
+                    </span>
+                  )}
+                  {cert.isWeakKey && (
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase text-white shadow-sm border border-white/10 flex items-center gap-1" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+                      <Key className="w-3 h-3" />
+                      WEAK KEY: {cert.keyAlgo}-{cert.keyLength}
+                    </span>
+                  )}
+                  {cert.selfSigned && (
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase text-white shadow-sm border border-white/10" style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)' }}>
+                      SELF-SIGNED
+                    </span>
+                  )}
+                  {!cert.isExpired && !cert.isWeakKey && !cert.selfSigned && (
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase text-white shadow-sm border border-white/10" style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
+                      COMPLIANT ({cert.keyLength}b)
+                    </span>
+                  )}
+                </div>
+              </div>
 
- <div className="p-2.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl dark: /[0.02] border dark: -white/5">
- <span className="text-[10px] font-mono uppercase text-gray-500 dark:text-gray-400 font-bold block mb-1">
- Signature Algorithm
- </span>
- <span className="font-mono text-gray-800 dark:text-gray-300 break-all text-[11px]">
- {cert.sigAlgo}
- </span>
- </div>
+              {/* Expired Warning Callout Banner if Expired */}
+              {cert.isExpired && (
+                <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 rounded-xl flex items-start gap-2.5 text-xs text-red-800 dark:text-red-200 font-medium">
+                  <XCircle className="w-4 h-4 text-red-500 dark:text-red-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-red-900 dark:text-red-100">CRITICAL CERTIFICATE EXPIRATION:</span> Expired on{' '}
+                    <span className="font-mono font-bold text-red-900 dark:text-red-100">{cert.expiry}</span> ({cert.daysExpired} days overdue). Remote peer accepted invalid, untrusted certificate during TLS handshake.
+                  </div>
+                </div>
+              )}
 
- <div className="p-2.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl dark: /[0.02] border dark: -white/5">
- <span className="text-[10px] font-mono uppercase text-gray-500 dark:text-gray-400 font-bold block mb-1">
- Validity Window
- </span>
- <span className="font-mono text-gray-900 dark:text-white text-[11px] block">
- {cert.validFrom} → {cert.expiry}
- </span>
- </div>
- </div>
+              {/* Weak Key Callout Banner if Weak */}
+              {cert.isWeakKey && (
+                <div className="mt-2.5 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 rounded-xl flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-200 font-medium">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-amber-900 dark:text-amber-100">INSECURE KEY LENGTH VIOLATION:</span> Public key length is only{' '}
+                    <span className="font-mono font-bold text-amber-900 dark:text-amber-100">{cert.keyLength} bits</span>. Violates NIST SP 800-131A requiring at least 2048-bit RSA for cryptographic confidentiality.
+                  </div>
+                </div>
+              )}
 
- {/* Bottom Row: Fingerprint + Actions */}
- <div className="mt-3 pt-3 border-t dark: -white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
- <div className="flex items-center gap-2 min-w-0 flex-1">
- <span className="text-[10px] font-mono uppercase text-gray-400 dark:text-gray-500 shrink-0">SHA-256:</span>
- <span className="text-[11px] font-mono text-gray-600 dark:text-gray-400 truncate max-w-[280px] sm:max-w-md" title={cert.fingerprintSha256}>
- {cert.fingerprintSha256}
- </span>
- <CopyButton value={cert.fingerprintSha256} />
- </div>
+              {/* Middle Row: Certificate Attributes Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-3 text-xs">
+                <div className="p-3 bg-white dark:bg-zinc-950/60 border border-gray-200 dark:border-zinc-800/80 rounded-xl">
+                  <span className="text-[10px] font-mono uppercase text-gray-600 dark:text-zinc-400 font-bold block mb-1">
+                    Issuer / CA
+                  </span>
+                  <span className="font-semibold text-gray-900 dark:text-zinc-100 break-all">
+                    {cert.issuer}
+                  </span>
+                </div>
 
- <div className="flex items-center gap-2 shrink-0">
- <button
- onClick={() => onSelectCert(cert)}
- className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl text-xs font-bold text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white bg-slate-100 hover: dark:bg-white/5 hover:dark: /10 border dark: -white/10 transition-all font-mono cursor-pointer"
- >
- <FileCode className="w-3.5 h-3.5 text-blue-400" />
- Inspect X.509 ASN.1
- </button>
- <button
- onClick={onInspectHandshake}
- className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all font-mono cursor-pointer "
- >
- <ExternalLink className="w-3.5 h-3.5" />
- View Handshake
- </button>
- </div>
- </div>
- </div>
- );
- })}
+                <div className="p-3 bg-white dark:bg-zinc-950/60 border border-gray-200 dark:border-zinc-800/80 rounded-xl">
+                  <span className="text-[10px] font-mono uppercase text-gray-600 dark:text-zinc-400 font-bold block mb-1">
+                    Public Key & Algorithm
+                  </span>
+                  <span className="font-mono font-semibold text-gray-900 dark:text-zinc-100">
+                    {cert.keyAlgo} {cert.keyLength}-bit ({cert.isWeakKey ? 'Insecure' : 'Adequate'})
+                  </span>
+                </div>
 
- {filteredCerts.length === 0 && (
+                <div className="p-3 bg-white dark:bg-zinc-950/60 border border-gray-200 dark:border-zinc-800/80 rounded-xl">
+                  <span className="text-[10px] font-mono uppercase text-gray-600 dark:text-zinc-400 font-bold block mb-1">
+                    Signature Algorithm
+                  </span>
+                  <span className="font-mono text-gray-800 dark:text-zinc-200 break-all text-[11px] font-medium">
+                    {cert.sigAlgo}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-white dark:bg-zinc-950/60 border border-gray-200 dark:border-zinc-800/80 rounded-xl">
+                  <span className="text-[10px] font-mono uppercase text-gray-600 dark:text-zinc-400 font-bold block mb-1">
+                    Validity Window
+                  </span>
+                  <span className="font-mono text-gray-900 dark:text-zinc-100 text-[11px] block font-medium">
+                    {cert.validFrom} → {cert.expiry}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom Row: Fingerprint + Actions */}
+              <div className="mt-3 pt-3 border-t border-gray-200/60 dark:border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="text-[10px] font-mono uppercase text-gray-600 dark:text-zinc-400 font-bold shrink-0">SHA-256:</span>
+                  <span className="text-[11px] font-mono text-gray-700 dark:text-zinc-300 font-medium truncate max-w-[280px] sm:max-w-md" title={cert.fingerprintSha256}>
+                    {cert.fingerprintSha256}
+                  </span>
+                  <CopyButton value={cert.fingerprintSha256} />
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => onSelectCert(cert)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700/60 rounded-xl text-xs font-bold text-gray-800 dark:text-zinc-200 transition-all font-mono cursor-pointer"
+                  >
+                    <FileCode className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+                    Inspect X.509 ASN.1
+                  </button>
+                  <button
+                    onClick={onInspectHandshake}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all font-mono cursor-pointer shadow-sm border-0"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    View Handshake
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {filteredCerts.length === 0 && (
  <div className="text-center py-12 text-xs text-gray-400 dark:text-gray-500 font-mono">
  No certificates match the selected filter query.
  </div>
@@ -995,7 +1063,7 @@ function CryptoIndicatorsTab() {
  </span>
  </div>
  <p className="text-xs font-mono font-bold text-gray-900 dark:text-white break-all">{ind.value}</p>
- <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">{ind.desc}</p>
+ <p className="text-[11px] text-gray-700 dark:text-zinc-200 mt-1 leading-relaxed font-medium">{ind.desc}</p>
  </div>
  <div className="mt-3 pt-2 border-t dark: -white/5 flex items-center justify-between text-[10px] font-mono text-gray-400 dark:text-gray-500">
  <span>{ind.rfc}</span>

@@ -67,6 +67,23 @@ export function AnimatedCircleGauge({
               <stop offset="60%" stopColor={gradientColors[1]} />
               <stop offset="100%" stopColor={gradientColors[2]} />
             </linearGradient>
+
+            {/* Circular laser shimmer sweep gradient rotating in direction of circle */}
+            <linearGradient id="circleShimmerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="transparent" stopOpacity="0" />
+              <stop offset="40%" stopColor="transparent" stopOpacity="0" />
+              <stop offset="50%" stopColor="#ffffff" stopOpacity="0.85" />
+              <stop offset="60%" stopColor="transparent" stopOpacity="0" />
+              <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+              <animateTransform
+                attributeName="gradientTransform"
+                type="rotate"
+                from="0 0.5 0.5"
+                to="360 0.5 0.5"
+                dur="2.8s"
+                repeatCount="indefinite"
+              />
+            </linearGradient>
           </defs>
 
           {/* Background track circle */}
@@ -93,7 +110,27 @@ export function AnimatedCircleGauge({
             strokeLinecap="round"
             shapeRendering="geometricPrecision"
             style={{
-              transition: 'stroke-dashoffset 1.35s cubic-bezier(0.34, 1.25, 0.64, 1)' }}
+              transition: 'stroke-dashoffset 1.35s cubic-bezier(0.34, 1.25, 0.64, 1)'
+            }}
+          />
+
+          {/* Circular laser shimmer sweep overlay along the filled arc */}
+          <circle
+            cx="50"
+            cy="50"
+            r={radius}
+            fill="none"
+            stroke="url(#circleShimmerGradient)"
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={fillOffset}
+            strokeLinecap="round"
+            shapeRendering="geometricPrecision"
+            style={{
+              transition: 'stroke-dashoffset 1.35s cubic-bezier(0.34, 1.25, 0.64, 1)',
+              mixBlendMode: 'screen',
+              pointerEvents: 'none'
+            }}
           />
         </svg>
 
@@ -108,10 +145,9 @@ export function AnimatedCircleGauge({
 
       {label && (
         <span
-          className="mt-3 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white shadow-sm"
+          className="mt-3 text-xs font-black uppercase tracking-wider"
           style={{
-            background: `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`,
-            border: '1px solid rgba(255,255,255,0.1)'
+            color: gradientColors[1] || gradientColors[0] || '#3b82f6'
           }}
         >
           {label}

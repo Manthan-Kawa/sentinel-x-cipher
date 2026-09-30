@@ -227,81 +227,69 @@ export function SessionMappingPage({ onNavigate }: { onNavigate?: (route: string
  <div className="space-y-6" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
  {/* ── Page Header ── */}
- <SlideIn delay={0} direction="down">
- <div className="space-y-3">
- <div className="flex items-start gap-2.5 sm:gap-3">
- {onNavigate && (
- <button
- onClick={() => onNavigate('threat-intelligence')}
- className="mt-0.5 w-8 h-8 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl flex items-center justify-center text-blue-400 hover:text-blue-300 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
- style={{
- background: 'rgba(59, 130, 246, 0.05)',
- border: '1px solid rgba(59, 130, 246, 0.45)',
- boxShadow: '0 0 10px rgba(59, 130, 246, 0.15)',
- }}
- title="Back to Threat Intelligence"
- >
- <ArrowLeft className="w-4 h-4" />
- </button>
- )}
- <div className="min-w-0 flex-1">
- <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-snug">Origin Investigation</h2>
- <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 leading-relaxed">
- Geographic infrastructure triangulation and origin relay location telemetry
- </p>
- </div>
- </div>
+      <SlideIn delay={0} direction="down">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-snug">
+                Session Mapping
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-zinc-300 mt-0.5 leading-relaxed font-medium">
+                Geographic infrastructure triangulation, network session routing & origin relay telemetry
+              </p>
+            </div>
+          </div>
 
- {/* ── Synced Analysis Banner ── */}
- {hasLive && currentResult && (
- <div
- className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-sm p-3.5 sm:p-4 overflow-hidden max-w-full"
- style={{
- background: lc.bg,
- border: `1px solid ${lc.border}`,
- boxShadow: lc.glow,
- }}
- >
- <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
- <div className="flex items-center gap-2 min-w-0 flex-1">
- <div
- className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
- style={{ background: lc.border, opacity: 0.9 }}
- >
- <Link className="w-3.5 h-3.5 text-white" />
- </div>
- <div className="min-w-0 flex-1">
- <p className="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold leading-none mb-0.5">Synced from Email Analysis</p>
- <p className="text-xs font-bold text-gray-900 dark:text-white font-mono truncate block" title={`${currentResult.case_id || 'ANALYSIS-ACTIVE'}${subjectHeader ? ` — ${subjectHeader}` : ''}`}>
- <span>{currentResult.case_id || 'ANALYSIS-ACTIVE'}</span>
- {subjectHeader && <span className="text-gray-600 dark:text-gray-300 font-normal"> — {subjectHeader}</span>}
- </p>
- </div>
- </div>
+          {/* ── Synced from Session Analysis Banner (Matching Image 2) ── */}
+          {hasLive && currentResult && (
+            <div className="bg-gray-50 dark:bg-zinc-900/60 border border-gray-200 dark:border-zinc-800/80 rounded-2xl shadow-sm p-3.5 sm:p-4 overflow-hidden max-w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+                    <Link className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-zinc-400 font-bold leading-none mb-0.5">
+                      SYNCED FROM SESSION ANALYSIS
+                    </p>
+                    <p className="text-xs font-bold text-gray-900 dark:text-white font-mono truncate block" title={`${currentResult.case_id || 'CASE-2026-7923'}${subjectHeader ? ` — ${subjectHeader}` : originIp ? ` — ${originIp}` : ''}`}>
+                      <span>{currentResult.case_id || 'CASE-2026-7923'}</span>
+                      {subjectHeader ? (
+                        <span className="text-gray-600 dark:text-zinc-300 font-normal"> — {subjectHeader}</span>
+                      ) : originIp ? (
+                        <span className="text-gray-600 dark:text-zinc-300 font-normal"> — {originIp} (Isolated Originating Sender)</span>
+                      ) : null}
+                    </p>
+                  </div>
+                </div>
 
- <div className="flex items-center gap-1.5 flex-wrap min-w-0">
- <span
- className={`px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold uppercase shrink-0 whitespace-nowrap ${lc.text}`}
- style={{ background: lc.bg, border: `1px solid ${lc.border}` }}
- >
- {currentResult.alert_level || 'INFO'}
- </span>
- {typeof currentResult.threat_score === 'number' && (
- <span className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-500/20 border border-purple-300 dark: -purple-500/30 shrink-0 whitespace-nowrap">
- Score: {currentResult.threat_score}/100
- </span>
- )}
- {(currentResult.origin?.sending_ip || currentResult.threat_intel?.sending_ip) && (
- <span className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-mono font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-100 dark:bg-cyan-500/15 border border-cyan-300 dark: -cyan-500/25 shrink-0 truncate max-w-[170px] whitespace-nowrap">
- IP: {currentResult.origin?.sending_ip || currentResult.threat_intel?.sending_ip}
- </span>
- )}
- </div>
- </div>
- </div>
- )}
- </div>
- </SlideIn>
+                <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                  <span
+                    className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold uppercase shrink-0 whitespace-nowrap text-white shadow-sm border border-white/10"
+                    style={{
+                      background: (currentResult.alert_level || '').toLowerCase() === 'low'
+                        ? 'linear-gradient(135deg, #0ea5e9, #0284c7)'
+                        : (currentResult.alert_level || '').toLowerCase() === 'medium'
+                        ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                        : 'linear-gradient(135deg, #ef4444, #dc2626)',
+                    }}
+                  >
+                    {currentResult.alert_level?.toUpperCase() || 'CRITICAL'}
+                  </span>
+                  {originIp && (
+                    <span
+                      className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold text-white shadow-sm border border-white/10 shrink-0 whitespace-nowrap"
+                      style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
+                    >
+                      IP: {originIp}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </SlideIn>
 
  {!currentResult ? (
  <SlideIn delay={60} direction="up">
@@ -368,7 +356,7 @@ export function SessionMappingPage({ onNavigate }: { onNavigate?: (route: string
  const found = liveMarkers.find((loc) => loc.id === m.id);
  if (found) setSelected(found);
  }}
- height="h-[300px] sm:h-[420px]"
+ height="h-[340px] sm:h-[460px] lg:h-[480px]"
  />
  </div>
  </SlideIn>
@@ -377,9 +365,6 @@ export function SessionMappingPage({ onNavigate }: { onNavigate?: (route: string
  <LocationDetailPanel location={selected} />
  </SlideIn>
  </div>
-
- {/* ── Horizontal Divider Line ── */}
- <div className="w-full h-px dark: /10" />
 
  {/* ── Bottom Row: Origin Confidence Engine (Full Width) ── */}
  <SlideIn delay={220} direction="up">
@@ -422,7 +407,7 @@ function LocationDetailPanel({ location }: { location: InfraLocation | null }) {
  <DetailRow label="IP Address" value={location.ip} />
  <DetailRow label="ASN" value={`${location.asn} (${location.asnOrg})`} />
  <DetailRow label="Hosting" value={location.hosting} mono={false} />
- <div className="flex items-center justify-between gap-3 py-2.5 border-b dark:border-white/5 last: -0">
+ <div className="flex items-center justify-between gap-3 py-1.5 border-b dark:border-white/5 last:border-b-0">
  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Confidence</span>
  <div className="flex items-center gap-2">
  <div className="w-20 h-1.5 dark: /10 rounded-full overflow-hidden">
@@ -446,7 +431,7 @@ function LocationDetailPanel({ location }: { location: InfraLocation | null }) {
  Supporting Evidence
  </h4>
  <div className="space-y-2">
- {location.evidence.map((e, i) => (
+ {location.evidence.slice(0, 4).map((e, i) => (
  <div key={i} className="flex items-start gap-2">
  <Info className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0 mt-0.5" />
  <span className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{e}</span>
@@ -460,7 +445,7 @@ function LocationDetailPanel({ location }: { location: InfraLocation | null }) {
 
 function DetailRow({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
  return (
- <div className="flex items-center justify-between gap-3 py-2 border-b dark:border-white/5 last: -0">
+ <div className="flex items-center justify-between gap-3 py-1.5 border-b dark:border-white/5 last:border-b-0">
  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}</span>
  <div className="flex items-center gap-1.5 min-w-0">
  <span className={`text-xs text-gray-900 dark:text-white ${mono ? 'font-mono' : ''} text-right break-all font-semibold`}>{value}</span>
@@ -580,100 +565,93 @@ function OriginConfidenceEngine({ result }: { result: EmailAnalysisResult | null
 import { AttackGraphCanvas } from '@/components/AttackGraph';
 
 export function AttackGraphPage({ onNavigate }: { onNavigate?: (route: string) => void }) {
- const { currentResult, loadDemoCase } = useAnalysis();
- const hasLive = Boolean(currentResult && (currentResult.case_id || currentResult.verdict));
- const rawLevel = (currentResult?.alert_level || 'info').toLowerCase();
- const lc = LEVEL_COLORS[rawLevel] || LEVEL_COLORS.info;
- const subjectHeader = Array.isArray(currentResult?.headers)
- ? currentResult?.headers.find((h) => h?.key?.toLowerCase() === 'subject')?.value
- : null;
+  const { currentResult, loadDemoCase } = useAnalysis();
+  const hasLive = Boolean(currentResult && (currentResult.case_id || currentResult.verdict));
+  const rawLevel = (currentResult?.alert_level || 'info').toLowerCase();
+  const lc = LEVEL_COLORS[rawLevel] || LEVEL_COLORS.info;
+  const originIp =
+    currentResult?.origin?.sending_ip ||
+    currentResult?.threat_intel?.sending_ip ||
+    '';
+  const subjectHeader = Array.isArray(currentResult?.headers)
+    ? currentResult?.headers.find((h) => h?.key?.toLowerCase() === 'subject')?.value
+    : null;
 
- return (
- <div className="space-y-4" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
- {/* ── Header ── */}
- <SlideIn delay={0} direction="down">
- <div className="space-y-3">
- <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
- <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
- {onNavigate && (
- <button
- onClick={() => onNavigate('origin-investigation')}
- className="mt-0.5 w-8 h-8 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl flex items-center justify-center text-blue-400 hover:text-blue-300 transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
- style={{
- background: 'rgba(59, 130, 246, 0.05)',
- border: '1px solid rgba(59, 130, 246, 0.45)',
- boxShadow: '0 0 10px rgba(59, 130, 246, 0.15)',
- }}
- title="Back to Origin Investigation"
- >
- <ArrowLeft className="w-4 h-4" />
- </button>
- )}
- <div className="min-w-0 flex-1">
- <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-snug">Attack Graph</h2>
- <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 leading-relaxed">
- Interactive entity correlation network — click any node to inspect details
- </p>
- </div>
- </div>
- <div className="hidden sm:flex items-center gap-2 shrink-0 self-start sm:self-center">
- <div
- className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50 rounded-xl border border-purple-200 dark: -purple-500/30 bg-purple-50 dark:bg-purple-950/20"
- >
- <span className="relative flex h-2 w-2">
- <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
- <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
- </span>
- <span className="text-xs font-semibold text-purple-700 dark:text-purple-300 font-mono">LIVE GRAPH ACTIVE</span>
- </div>
- </div>
- </div>
+  return (
+    <div className="space-y-4" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+      {/* ── Header ── */}
+      <SlideIn delay={0} direction="down">
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-snug">Attack Graph</h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-zinc-300 mt-0.5 leading-relaxed font-medium">
+                Interactive entity correlation network — click any node to inspect details
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 shrink-0 self-start sm:self-center">
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-zinc-900/50 border border-purple-200 dark:border-purple-500/30 rounded-xl bg-purple-50 dark:bg-purple-950/20"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
+                </span>
+                <span className="text-xs font-semibold text-purple-700 dark:text-purple-300 font-mono">LIVE GRAPH ACTIVE</span>
+              </div>
+            </div>
+          </div>
 
- {/* ── Synced Analysis Banner ── */}
- {hasLive && currentResult && (
- <div
- className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 rounded-2xl shadow-sm p-3.5 sm:p-4 overflow-hidden max-w-full"
- style={{
- background: lc.bg,
- border: `1px solid ${lc.border}`,
- boxShadow: lc.glow,
- }}
- >
- <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
- <div className="flex items-center gap-2 min-w-0 flex-1">
- <div
- className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
- style={{ background: lc.border, opacity: 0.9 }}
- >
- <Link className="w-3.5 h-3.5 text-white" />
- </div>
- <div className="min-w-0 flex-1">
- <p className="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold leading-none mb-0.5">Synced from Email Analysis</p>
- <p className="text-xs font-bold text-gray-900 dark:text-white font-mono truncate" title={`${currentResult.case_id || 'ANALYSIS-ACTIVE'}${subjectHeader ? ` — ${subjectHeader}` : ''}`}>
- <span>{currentResult.case_id || 'ANALYSIS-ACTIVE'}</span>
- {subjectHeader && <span className="text-gray-600 dark:text-gray-300 font-normal"> — {subjectHeader}</span>}
- </p>
- </div>
- </div>
+          {/* ── Synced Analysis Banner ── */}
+          {hasLive && currentResult && (
+            <div className="bg-gray-50 dark:bg-zinc-900/60 border border-gray-200 dark:border-zinc-800/80 rounded-2xl shadow-sm p-3.5 sm:p-4 overflow-hidden max-w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+                    <Link className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-zinc-400 font-bold leading-none mb-0.5">
+                      SYNCED FROM SESSION ANALYSIS
+                    </p>
+                    <p className="text-xs font-bold text-gray-900 dark:text-white font-mono truncate block" title={`${currentResult.case_id || 'CASE-2026-4065'}${subjectHeader ? ` — ${subjectHeader}` : originIp ? ` — ${originIp}` : ''}`}>
+                      <span>{currentResult.case_id || 'CASE-2026-4065'}</span>
+                      {subjectHeader ? (
+                        <span className="text-gray-600 dark:text-zinc-300 font-normal"> — {subjectHeader}</span>
+                      ) : originIp ? (
+                        <span className="text-gray-600 dark:text-zinc-300 font-normal"> — {originIp} (Attack Surface Graph)</span>
+                      ) : null}
+                    </p>
+                  </div>
+                </div>
 
- <div className="flex items-center gap-1.5 flex-wrap min-w-0">
- <span
- className={`px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold uppercase shrink-0 whitespace-nowrap ${lc.text}`}
- style={{ background: lc.bg, border: `1px solid ${lc.border}` }}
- >
- {currentResult.alert_level || 'INFO'}
- </span>
- {typeof currentResult.threat_score === 'number' && (
- <span className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-500/20 border border-purple-300 dark: -purple-500/30 shrink-0 whitespace-nowrap">
- Score: {currentResult.threat_score}/100
- </span>
- )}
- </div>
- </div>
- </div>
- )}
- </div>
- </SlideIn>
+                <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                  <span
+                    className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold uppercase shrink-0 whitespace-nowrap text-white shadow-sm border border-white/10"
+                    style={{
+                      background: (currentResult.alert_level || '').toLowerCase() === 'low'
+                        ? 'linear-gradient(135deg, #0ea5e9, #0284c7)'
+                        : (currentResult.alert_level || '').toLowerCase() === 'medium'
+                        ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                        : 'linear-gradient(135deg, #ef4444, #dc2626)',
+                    }}
+                  >
+                    {currentResult.alert_level?.toUpperCase() || 'LOW'}
+                  </span>
+                  {originIp && (
+                    <span
+                      className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-bold text-white shadow-sm border border-white/10 shrink-0 whitespace-nowrap"
+                      style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
+                    >
+                      IP: {originIp}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </SlideIn>
 
  {!currentResult ? (
  <SlideIn delay={60} direction="up">

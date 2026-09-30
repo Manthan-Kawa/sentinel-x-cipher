@@ -4,10 +4,10 @@
  * Renders the full 11-node ReactFlow topology graph with minimap, legend,
  * node details panel and the same layout engine as the dedicated Attack Graph page.
  */
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import ReactFlow, {
   Background,
-  Controls,
+  
   MiniMap,
   Handle,
   Position,
@@ -97,11 +97,11 @@ function AttackNode({ data, selected }: NodeProps) {
   return (
     <div
       style={{
-        background: '#0d0f19',
+        background: '#18181b',
         border: `1.5px solid ${selected ? '#ffffff' : cfg.border}`,
         borderRadius: '10px',
-        width: '210px',
-        boxShadow: selected ? '0 0 0 1px rgba(255,255,255,0.2)' : 'none',
+        width: '215px',
+        boxShadow: selected ? '0 0 0 2px rgba(255,255,255,0.4), 0 4px 20px rgba(0,0,0,0.6)' : '0 4px 16px rgba(0,0,0,0.4)',
         overflow: 'hidden',
         cursor: 'grab',
         userSelect: 'none',
@@ -113,9 +113,9 @@ function AttackNode({ data, selected }: NodeProps) {
       <Handle type="source" position={Position.Bottom} id="bottom" style={{ background: cfg.border, width: 8, height: 8, bottom: -4 }} />
 
       {/* Header Bar */}
-      <div style={{ background: cfg.headerBg, borderBottom: `1px solid ${cfg.border}40`, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '7px' }}>
-        <Icon style={{ color: cfg.iconColor, width: 12, height: 12, flexShrink: 0 }} />
-        <span style={{ color: cfg.iconColor, fontSize: '9px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ background: cfg.headerBg, borderBottom: `1px solid ${cfg.border}60`, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '7px' }}>
+        <Icon style={{ color: cfg.iconColor, width: 13, height: 13, flexShrink: 0 }} />
+        <span style={{ color: cfg.iconColor, fontSize: '9.5px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>
           {cfg.label}
         </span>
       </div>
@@ -127,12 +127,12 @@ function AttackNode({ data, selected }: NodeProps) {
         </div>
       </div>
 
-      {/* Detail Rows */}
-      <div style={{ padding: '0 10px 8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+      {/* Detail Rows (High contrast) */}
+      <div style={{ padding: '0 10px 8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {nd.details.map((d) => (
-          <div key={d.key} style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-            <span style={{ color: '#6b7280', fontSize: '9.5px', fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap', flexShrink: 0 }}>{d.key}:</span>
-            <span style={{ color: '#d1d5db', fontSize: '9.5px', fontFamily: "'Inter', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.value}</span>
+          <div key={d.key} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span style={{ color: '#9ca3af', fontSize: '10px', fontWeight: 600, fontFamily: "'Inter', sans-serif", whiteSpace: 'nowrap', flexShrink: 0 }}>{d.key}:</span>
+            <span style={{ color: '#f3f4f6', fontSize: '10px', fontWeight: 500, fontFamily: "'Inter', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.value}</span>
           </div>
         ))}
       </div>
@@ -559,41 +559,42 @@ function AttackGraphCanvasInner({
     }, 50);
   }, [result?.case_id, liveNodes, setNodes, rfInstance]);
 
+    const [activeAction, setActiveAction] = useState<'fit' | 'reset'>('fit');
+  const actionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [indicatorStyle, setIndicatorStyle] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    opacity: number;
+  }>({ left: 0, top: 0, width: 0, height: 0, opacity: 0 });
+
+  useLayoutEffect(() => {
+    const updateIndicator = () => {
+      const currentEl = actionRefs.current[activeAction];
+      if (currentEl) {
+        setIndicatorStyle({
+          left: currentEl.offsetLeft,
+          top: currentEl.offsetTop,
+          width: currentEl.offsetWidth,
+          height: currentEl.offsetHeight,
+          opacity: 1,
+        });
+      }
+    };
+    updateIndicator();
+    const rafId = requestAnimationFrame(updateIndicator);
+    window.addEventListener('resize', updateIndicator);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', updateIndicator);
+    };
+  }, [activeAction]);
+
   const selectedNode = liveNodes.find((n) => n.id === selectedId) ?? null;
 
-  return (
+    return (
     <div className="space-y-3">
-      {/* ── Toolbar: Synced Topology Status & Actions (No manual switcher) ── */}
-      {showHeader && (
-        <div
-          className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 shadow-none"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold">
-              Synced Topology:
-            </span>
-            <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-500/15 border border-purple-200 dark:border-purple-500/30">
-              {layoutDisplayNames[layoutStyle]}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={fitView}
-              className="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold text-gray-900 dark:text-zinc-100 hover:text-gray-900 dark:hover:text-white transition-colors border border-gray-200 dark:border-zinc-800/50 hover:border-gray-200 dark:hover:border-white/20 bg-gray-50 dark:bg-white/5 cursor-pointer"
-            >
-              Fit View
-            </button>
-            <button
-              onClick={reset}
-              className="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold text-gray-900 dark:text-zinc-100 hover:text-gray-900 dark:hover:text-white transition-colors border border-gray-200 dark:border-zinc-800/50 hover:border-gray-200 dark:hover:border-white/20 bg-gray-50 dark:bg-white/5 cursor-pointer"
-            >
-              Reset
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ── 80% Graph Canvas / 20% Node Details Panel Split ── */}
       <div
         className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:h-[var(--graph-height)]"
@@ -603,8 +604,8 @@ function AttackGraphCanvasInner({
         <div
           className="lg:col-span-4 rounded-2xl overflow-hidden relative select-none h-[400px] sm:h-[480px] lg:h-full"
           style={{
-            background: '#07080e',
-            border: '1px solid rgba(39,39,42,0.5)',
+            background: '#121317',
+            border: '1px solid rgba(255,255,255,0.08)',
             boxShadow: isDark ? '0 8px 40px rgba(0,0,0,0.6)' : 'none' }}
         >
           <ReactFlow
@@ -623,34 +624,78 @@ function AttackGraphCanvasInner({
             minZoom={0.2}
             maxZoom={2.5}
           >
-            <Background color="rgba(39,39,42,0.5)" gap={20} size={1} style={{ backgroundColor: '#07080e' }} />
-            <Controls
-              position="top-left"
-              showInteractive={false}
-              style={{ left: '8px', top: '8px', bottom: 'auto' }}
-            />
+            <Background color="rgba(255,255,255,0.08)" gap={20} size={1} style={{ backgroundColor: '#121317' }} />
             <div className="hidden sm:block">
               <MiniMap
                 nodeColor={(node) => {
                   const nd = node.data?.nodeData as AGNode | undefined;
                   return nd ? (NODE_CFG[nd.type]?.border ?? '#3b82f6') : '#3b82f6';
                 }}
-                maskColor="rgba(7, 8, 14, 0.75)"
-                style={{ background: '#0a0c16', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', width: 160, height: 100, right: '16px', bottom: '16px' }}
+                maskColor="rgba(18, 19, 23, 0.8)"
+                style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', width: 160, height: 100, right: '16px', bottom: '16px' }}
               />
             </div>
           </ReactFlow>
 
-
-          {/* Legend */}
+          {/* Top-Left Segmented Controls: Fit View / Reset (Inside Graph Canvas) */}
           <div
-            className="absolute bottom-3 left-3 right-3 sm:right-auto sm:bottom-4 sm:left-4 z-20 flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl backdrop-blur-md overflow-x-auto scrollbar-none max-w-[calc(100%-24px)]"
-            style={{
-              background: 'rgba(10,12,22,0.92)',
-              border: '1px solid rgba(39,39,42,0.5)',
-              boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.5)' : 'none' }}
+            className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 inline-flex items-center gap-1 p-1 bg-zinc-900/90 rounded-xl border border-zinc-700/80 select-none shadow-lg backdrop-blur-md"
           >
-            <span className="text-[9px] font-mono font-bold text-gray-500 uppercase tracking-widest mr-1 shrink-0">NODE TYPES</span>
+            {/* Solid blue sliding indicator with smooth transition */}
+            <div
+              className="absolute pointer-events-none rounded-lg bg-blue-600 shadow-sm"
+              style={{
+                transform: `translate3d(${indicatorStyle.left}px, 0, 0)`,
+                width: indicatorStyle.width,
+                height: 'calc(100% - 8px)',
+                top: '4px',
+                opacity: indicatorStyle.opacity,
+                transition: 'transform 250ms cubic-bezier(0.25, 1, 0.5, 1), width 250ms cubic-bezier(0.25, 1, 0.5, 1), opacity 150ms ease',
+                left: 0,
+              }}
+            />
+
+            <button
+              ref={(el) => { actionRefs.current['fit'] = el; }}
+              onClick={() => {
+                setActiveAction('fit');
+                fitView();
+              }}
+              className={`relative z-10 px-3 py-1 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer ${
+                activeAction === 'fit'
+                  ? 'text-white font-bold'
+                  : 'text-zinc-400 hover:text-zinc-200 font-medium'
+              }`}
+            >
+              Fit View
+            </button>
+            <button
+              ref={(el) => { actionRefs.current['reset'] = el; }}
+              onClick={() => {
+                setActiveAction('reset');
+                reset();
+              }}
+              className={`relative z-10 px-3 py-1 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer ${
+                activeAction === 'reset'
+                  ? 'text-white font-bold'
+                  : 'text-zinc-400 hover:text-zinc-200 font-medium'
+              }`}
+            >
+              Reset
+            </button>
+          </div>
+
+
+                    {/* Legend */}
+          <div
+            className="absolute bottom-3 left-3 right-3 sm:right-auto sm:bottom-4 sm:left-4 z-20 flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 rounded-xl backdrop-blur-md overflow-x-auto scrollbar-none max-w-[calc(100%-24px)]"
+            style={{
+              background: 'rgba(24, 24, 27, 0.95)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
+            }}
+          >
+            <span className="text-[10px] font-mono font-bold text-gray-400 dark:text-zinc-400 uppercase tracking-widest mr-1 shrink-0">NODE TYPES</span>
             <div className="flex items-center gap-1.5 shrink-0">
               {legendTypes.map((item) => {
                 const cfg = NODE_CFG[item.type];
@@ -658,11 +703,11 @@ function AttackGraphCanvasInner({
                 return (
                   <div
                     key={item.type}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-semibold"
-                    style={{ background: cfg.headerBg, border: `1px solid ${cfg.border}50`, color: cfg.iconColor }}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold whitespace-nowrap shadow-sm"
+                    style={{ background: cfg.headerBg, border: `1px solid ${cfg.border}`, color: cfg.iconColor }}
                   >
-                    <Icon className="w-3 h-3" style={{ color: cfg.iconColor }} />
-                    <span className="text-[10px]">{item.label}</span>
+                    <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: cfg.iconColor }} />
+                    <span className="text-[11px] font-bold">{item.label}</span>
                   </div>
                 );
               })}
@@ -672,7 +717,7 @@ function AttackGraphCanvasInner({
 
         {/* ── Node Details Panel (20%) ── */}
         <div
-          className="lg:col-span-1 rounded-2xl p-5 flex flex-col justify-between bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 shadow-none dark: overflow-auto h-full"
+          className="lg:col-span-1 rounded-2xl p-5 flex flex-col justify-between bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 shadow-none dark:shadow-none overflow-auto h-full"
         >
           {selectedNode ? (() => {
             const cfg = NODE_CFG[selectedNode.type];
@@ -698,30 +743,14 @@ function AttackGraphCanvasInner({
                     </div>
                   ))}
                 </div>
-                {selectedNode.sublabel && (
-                  <div className="rounded-xl p-3 bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50">
-                    <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono uppercase font-bold block mb-1">Context Note</span>
-                    <p className="text-xs text-gray-900 dark:text-zinc-100 font-mono leading-relaxed">{selectedNode.sublabel}</p>
-                  </div>
-                )}
               </div>
             );
           })() : (
-            <div className="flex flex-col items-center justify-center text-center h-full py-12">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}>
-                <Network className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <h4 className="text-xs font-bold text-gray-900 dark:text-zinc-100 mb-1">Node Inspector</h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-mono max-w-[180px]">Click any node on the graph canvas to inspect its entity details & metadata.</p>
+            <div className="flex flex-col items-center justify-center text-center py-10 my-auto text-gray-400 dark:text-gray-500">
+              <Info className="w-8 h-8 mb-2 opacity-50" />
+              <p className="text-xs font-mono">Click any graph node to inspect forensic attributes</p>
             </div>
           )}
-
-          <div className="rounded-xl p-3 flex items-center gap-2 mt-auto bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50">
-            <Info className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
-            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">
-              {selectedNode ? 'Click pane to deselect' : `${liveNodes.length} entities mapped in cluster`}
-            </span>
-          </div>
         </div>
       </div>
     </div>
