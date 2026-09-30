@@ -265,9 +265,8 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
         className="relative w-full max-w-[390px] mx-4 rounded-3xl p-6 sm:p-7 max-h-[92vh] overflow-y-auto overflow-x-hidden scrollbar-thin animate-slide-up"
         style={{
           background: 'rgba(18,18,26,0.97)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)',
-        }}
+          border: '1px solid rgba(39,39,42,0.5)',
+          boxShadow: 'none' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Back / close */}
@@ -319,7 +318,7 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
           {/* Email */}
           <div
             className="flex items-center gap-3 px-4 py-3.5 rounded-2xl"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
+            style={{ background: 'rgba(39,39,42,0.5)', border: '1px solid rgba(39,39,42,0.5)' }}
           >
             <Mail className="w-4 h-4 text-gray-500 shrink-0" />
             <input
@@ -334,7 +333,7 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
           {/* Password */}
           <div
             className="flex items-center gap-3 px-4 py-3.5 rounded-2xl"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
+            style={{ background: 'rgba(39,39,42,0.5)', border: '1px solid rgba(39,39,42,0.5)' }}
           >
             <Lock className="w-4 h-4 text-gray-500 shrink-0" />
             <input
@@ -357,7 +356,7 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
           {tab === 'signup' && (
             <div
               className="flex items-center gap-3 px-4 py-3.5 rounded-2xl"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
+              style={{ background: 'rgba(39,39,42,0.5)', border: '1px solid rgba(39,39,42,0.5)' }}
             >
               <Lock className="w-4 h-4 text-gray-500 shrink-0" />
               <input
@@ -398,8 +397,7 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
             className="w-full py-3.5 rounded-2xl text-white font-bold text-sm mt-1 hover:opacity-90 active:opacity-80 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
             style={{
               background: 'linear-gradient(135deg, #06b6d4 0%, #6366f1 50%, #8b5cf6 100%)',
-              boxShadow: '0 4px 24px rgba(99,102,241,0.4)',
-            }}
+              boxShadow: 'none' }}
           >
             {isSubmitting ? (
               <span>{tab === 'login' ? 'Signing in...' : 'Checking account...'}</span>
@@ -411,9 +409,9 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-4">
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+          <div className="flex-1 h-px" style={{ background: 'rgba(39,39,42,0.5)' }} />
           <span className="text-gray-600 text-xs">or continue with</span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+          <div className="flex-1 h-px" style={{ background: 'rgba(39,39,42,0.5)' }} />
         </div>
 
         {/* OAuth buttons */}
@@ -423,7 +421,7 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
             disabled={isGoogleLoading}
             onClick={() => onGoogleSignIn ? onGoogleSignIn() : onSuccess('demouser1@gmail.com', 'google-oauth', 'user')}
             className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl text-white text-sm font-medium transition-all hover:brightness-110 disabled:opacity-50"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)' }}
+            style={{ background: 'rgba(39,39,42,0.5)', border: '1px solid rgba(39,39,42,0.5)' }}
           >
             <GoogleIcon />
             {isGoogleLoading
@@ -434,7 +432,7 @@ function AuthModal({ initialMode = 'login', onClose, onSuccess, onGoogleSignIn, 
             type="button"
             onClick={handleAppleClick}
             className="w-full flex items-center justify-center gap-3 py-3 rounded-2xl text-white text-sm font-medium transition-all hover:brightness-110 active:scale-95"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)' }}
+            style={{ background: 'rgba(39,39,42,0.5)', border: '1px solid rgba(39,39,42,0.5)' }}
           >
             <AppleIcon />
             Continue with Apple
@@ -619,8 +617,7 @@ export function WelcomePage({ onNavigate }: WelcomePageProps) {
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
           background:
-            'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, transparent 40%, rgba(0,0,0,0.2) 70%, rgba(0,0,0,0.55) 100%)',
-        }}
+            'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, transparent 40%, rgba(0,0,0,0.2) 70%, rgba(0,0,0,0.55) 100%)' }}
       />
 
       {/* ══ LAYER 1 — SENTINEL-X UI ══ */}
@@ -631,8 +628,7 @@ export function WelcomePage({ onNavigate }: WelcomePageProps) {
           className="flex items-center gap-3 px-4 sm:px-7"
           style={{
             pointerEvents: 'auto',
-            paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))',
-          }}
+            paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))' }}
         >
           <TransparentLogo src="/Logo-SentinelX.PNG" alt="SENTINEL-X" className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-xl" />
 
@@ -688,11 +684,10 @@ export function WelcomePage({ onNavigate }: WelcomePageProps) {
             <button
               id="analyze-email-btn"
               onClick={handleAnalyzeEmailClick}
-              className="glow-btn group relative flex items-center gap-2 text-white font-semibold text-sm px-7 sm:px-8 py-3.5 sm:py-4 rounded-full transition-all duration-200 hover:scale-105 active:scale-100"
+              className="-btn group relative flex items-center gap-2 text-white font-semibold text-sm px-7 sm:px-8 py-3.5 sm:py-4 rounded-full transition-all duration-200 hover:scale-105 active:scale-100"
               style={{
                 background: 'linear-gradient(135deg, rgba(10,10,20,0.95) 0%, rgba(5,5,14,0.98) 100%)',
-                boxShadow: '0 0 32px rgba(96,165,250,0.08)',
-              }}
+                 }}
             >
               <Mail className="w-4 h-4 text-blue-300" />
               <span>Analyze Email</span>

@@ -73,19 +73,19 @@ import { resolveGeoLocation } from '@/utils/geoUtils';
 // ── Node colour config (shared palette) ─────────────────────────────────────
 export const NODE_CFG: Record<GraphNodeType, {
   icon: LucideIcon; iconColor: string;
-  border: string; glow: string; headerBg: string; label: string;
+  border: string; headerBg: string; label: string;
 }> = {
-  email: { icon: Mail, iconColor: '#f43f5e', border: '#f43f5e', glow: 'rgba(244,63,94,0.3)', headerBg: 'rgba(244,63,94,0.15)', label: 'EMAIL' },
-  sender: { icon: User, iconColor: '#f97316', border: '#f97316', glow: 'rgba(249,115,22,0.3)', headerBg: 'rgba(249,115,22,0.15)', label: 'SENDER' },
-  domain: { icon: Globe, iconColor: '#3b82f6', border: '#3b82f6', glow: 'rgba(59,130,246,0.3)', headerBg: 'rgba(59,130,246,0.15)', label: 'DOMAIN' },
-  ip: { icon: Server, iconColor: '#eab308', border: '#eab308', glow: 'rgba(234,179,8,0.3)', headerBg: 'rgba(234,179,8,0.15)', label: 'IP' },
-  url: { icon: Link2, iconColor: '#ea580c', border: '#ea580c', glow: 'rgba(234,88,12,0.3)', headerBg: 'rgba(234,88,12,0.15)', label: 'URL' },
-  attachment: { icon: FileText, iconColor: '#14b8a6', border: '#14b8a6', glow: 'rgba(20,184,166,0.3)', headerBg: 'rgba(20,184,166,0.15)', label: 'ATTACHMENT' },
-  hash: { icon: Hash, iconColor: '#2563eb', border: '#2563eb', glow: 'rgba(37,99,235,0.3)', headerBg: 'rgba(37,99,235,0.15)', label: 'HASH' },
-  mailserver: { icon: Server, iconColor: '#8b5cf6', border: '#8b5cf6', glow: 'rgba(139,92,246,0.3)', headerBg: 'rgba(139,92,246,0.15)', label: 'MAIL SERVER' },
-  asn: { icon: Network, iconColor: '#6366f1', border: '#6366f1', glow: 'rgba(99,102,241,0.3)', headerBg: 'rgba(99,102,241,0.15)', label: 'ASN' },
-  campaign: { icon: FolderSearch, iconColor: '#ec4899', border: '#ec4899', glow: 'rgba(236,72,153,0.3)', headerBg: 'rgba(236,72,153,0.15)', label: 'CAMPAIGN' },
-  case: { icon: Shield, iconColor: '#8b5cf6', border: '#8b5cf6', glow: 'rgba(139,92,246,0.3)', headerBg: 'rgba(139,92,246,0.15)', label: 'CASE' },
+  email: { icon: Mail, iconColor: '#f43f5e', border: '#f43f5e', headerBg: 'rgba(244,63,94,0.15)', label: 'EMAIL' },
+  sender: { icon: User, iconColor: '#f97316', border: '#f97316', headerBg: 'rgba(249,115,22,0.15)', label: 'SENDER' },
+  domain: { icon: Globe, iconColor: '#3b82f6', border: '#3b82f6', headerBg: 'rgba(59,130,246,0.15)', label: 'DOMAIN' },
+  ip: { icon: Server, iconColor: '#eab308', border: '#eab308', headerBg: 'rgba(234,179,8,0.15)', label: 'IP' },
+  url: { icon: Link2, iconColor: '#ea580c', border: '#ea580c', headerBg: 'rgba(234,88,12,0.15)', label: 'URL' },
+  attachment: { icon: FileText, iconColor: '#14b8a6', border: '#14b8a6', headerBg: 'rgba(20,184,166,0.15)', label: 'ATTACHMENT' },
+  hash: { icon: Hash, iconColor: '#2563eb', border: '#2563eb', headerBg: 'rgba(37,99,235,0.15)', label: 'HASH' },
+  mailserver: { icon: Server, iconColor: '#8b5cf6', border: '#8b5cf6', headerBg: 'rgba(139,92,246,0.15)', label: 'MAIL SERVER' },
+  asn: { icon: Network, iconColor: '#6366f1', border: '#6366f1', headerBg: 'rgba(99,102,241,0.15)', label: 'ASN' },
+  campaign: { icon: FolderSearch, iconColor: '#ec4899', border: '#ec4899', headerBg: 'rgba(236,72,153,0.15)', label: 'CAMPAIGN' },
+  case: { icon: Shield, iconColor: '#8b5cf6', border: '#8b5cf6', headerBg: 'rgba(139,92,246,0.15)', label: 'CASE' },
 };
 
 // ── Custom Node Renderer ─────────────────────────────────────────────────────
@@ -101,14 +101,11 @@ function AttackNode({ data, selected }: NodeProps) {
         border: `1.5px solid ${selected ? '#ffffff' : cfg.border}`,
         borderRadius: '10px',
         width: '210px',
-        boxShadow: selected
-          ? `0 0 24px ${cfg.border}, 0 0 8px ${cfg.border}`
-          : `0 0 16px ${cfg.glow}`,
+        boxShadow: selected ? '0 0 0 1px rgba(255,255,255,0.2)' : 'none',
         overflow: 'hidden',
         cursor: 'grab',
         userSelect: 'none',
-        transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-      }}
+        transition: 'border-color 0.2s ease, box-shadow 0.2s ease' }}
     >
       <Handle type="target" position={Position.Left} id="left" style={{ background: cfg.border, width: 8, height: 8, left: -4 }} />
       <Handle type="source" position={Position.Right} id="right" style={{ background: cfg.border, width: 8, height: 8, right: -4 }} />
@@ -569,10 +566,10 @@ function AttackGraphCanvasInner({
       {/* ── Toolbar: Synced Topology Status & Actions (No manual switcher) ── */}
       {showHeader && (
         <div
-          className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-none"
+          className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 shadow-none"
         >
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 dark:text-gray-400 font-bold">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 font-bold">
               Synced Topology:
             </span>
             <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-500/15 border border-purple-200 dark:border-purple-500/30">
@@ -583,13 +580,13 @@ function AttackGraphCanvasInner({
           <div className="flex items-center gap-2">
             <button
               onClick={fitView}
-              className="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-100 dark:bg-white/5 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold text-gray-900 dark:text-zinc-100 hover:text-gray-900 dark:hover:text-white transition-colors border border-gray-200 dark:border-zinc-800/50 hover:border-gray-200 dark:hover:border-white/20 bg-gray-50 dark:bg-white/5 cursor-pointer"
             >
               Fit View
             </button>
             <button
               onClick={reset}
-              className="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold text-slate-700 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-100 dark:bg-white/5 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold text-gray-900 dark:text-zinc-100 hover:text-gray-900 dark:hover:text-white transition-colors border border-gray-200 dark:border-zinc-800/50 hover:border-gray-200 dark:hover:border-white/20 bg-gray-50 dark:bg-white/5 cursor-pointer"
             >
               Reset
             </button>
@@ -607,9 +604,8 @@ function AttackGraphCanvasInner({
           className="lg:col-span-4 rounded-2xl overflow-hidden relative select-none h-[400px] sm:h-[480px] lg:h-full"
           style={{
             background: '#07080e',
-            border: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: isDark ? '0 8px 40px rgba(0,0,0,0.6)' : 'none',
-          }}
+            border: '1px solid rgba(39,39,42,0.5)',
+            boxShadow: isDark ? '0 8px 40px rgba(0,0,0,0.6)' : 'none' }}
         >
           <ReactFlow
             nodes={nodes}
@@ -627,7 +623,7 @@ function AttackGraphCanvasInner({
             minZoom={0.2}
             maxZoom={2.5}
           >
-            <Background color="rgba(255,255,255,0.06)" gap={20} size={1} style={{ backgroundColor: '#07080e' }} />
+            <Background color="rgba(39,39,42,0.5)" gap={20} size={1} style={{ backgroundColor: '#07080e' }} />
             <Controls
               position="top-left"
               showInteractive={false}
@@ -651,9 +647,8 @@ function AttackGraphCanvasInner({
             className="absolute bottom-3 left-3 right-3 sm:right-auto sm:bottom-4 sm:left-4 z-20 flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl backdrop-blur-md overflow-x-auto scrollbar-none max-w-[calc(100%-24px)]"
             style={{
               background: 'rgba(10,12,22,0.92)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.5)' : 'none',
-            }}
+              border: '1px solid rgba(39,39,42,0.5)',
+              boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.5)' : 'none' }}
           >
             <span className="text-[9px] font-mono font-bold text-gray-500 uppercase tracking-widest mr-1 shrink-0">NODE TYPES</span>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -677,7 +672,7 @@ function AttackGraphCanvasInner({
 
         {/* ── Node Details Panel (20%) ── */}
         <div
-          className="lg:col-span-1 rounded-2xl p-5 flex flex-col justify-between bg-white dark:bg-[#090b12] border border-slate-200 dark:border-white/10 shadow-none dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-auto h-full"
+          className="lg:col-span-1 rounded-2xl p-5 flex flex-col justify-between bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800/50 shadow-none dark: overflow-auto h-full"
         >
           {selectedNode ? (() => {
             const cfg = NODE_CFG[selectedNode.type];
@@ -688,25 +683,25 @@ function AttackGraphCanvasInner({
                   <Icon style={{ color: cfg.iconColor, width: 18, height: 18, flexShrink: 0 }} />
                   <div className="min-w-0">
                     <div style={{ color: cfg.iconColor, fontSize: '9px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: "'Inter', sans-serif" }}>{cfg.label}</div>
-                    <div className="text-xs font-mono text-slate-900 dark:text-white font-bold mt-0.5 truncate">{selectedNode.label}</div>
+                    <div className="text-xs font-mono text-gray-900 dark:text-zinc-100 font-bold mt-0.5 truncate">{selectedNode.label}</div>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[10px] text-slate-500 dark:text-gray-400 uppercase tracking-widest font-mono font-bold mb-2">Entity Attributes</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-mono font-bold mb-2">Entity Attributes</p>
                   {selectedNode.details.map((d) => (
-                    <div key={d.key} className="flex items-center justify-between gap-2 py-2 border-b border-slate-200/60 dark:border-white/5 last:border-0">
-                      <span className="text-xs text-slate-500 dark:text-gray-400 font-mono capitalize shrink-0">{d.key}</span>
+                    <div key={d.key} className="flex items-center justify-between gap-2 py-2 border-b border-gray-200/60 dark:border-zinc-800/50 last:border-0">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-mono capitalize shrink-0">{d.key}</span>
                       <div className="flex items-center gap-1 min-w-0">
-                        <span className="text-xs text-slate-900 dark:text-white font-mono font-semibold truncate">{d.value}</span>
+                        <span className="text-xs text-gray-900 dark:text-zinc-100 font-mono font-semibold truncate">{d.value}</span>
                         <CopyButton value={d.value} />
                       </div>
                     </div>
                   ))}
                 </div>
                 {selectedNode.sublabel && (
-                  <div className="rounded-xl p-3 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.05]">
-                    <span className="text-[10px] text-slate-500 dark:text-gray-400 font-mono uppercase font-bold block mb-1">Context Note</span>
-                    <p className="text-xs text-slate-700 dark:text-gray-300 font-mono leading-relaxed">{selectedNode.sublabel}</p>
+                  <div className="rounded-xl p-3 bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50">
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono uppercase font-bold block mb-1">Context Note</span>
+                    <p className="text-xs text-gray-900 dark:text-zinc-100 font-mono leading-relaxed">{selectedNode.sublabel}</p>
                   </div>
                 )}
               </div>
@@ -716,14 +711,14 @@ function AttackGraphCanvasInner({
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}>
                 <Network className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
-              <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-1">Node Inspector</h4>
-              <p className="text-xs text-slate-500 dark:text-gray-400 font-mono max-w-[180px]">Click any node on the graph canvas to inspect its entity details & metadata.</p>
+              <h4 className="text-xs font-bold text-gray-900 dark:text-zinc-100 mb-1">Node Inspector</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-mono max-w-[180px]">Click any node on the graph canvas to inspect its entity details & metadata.</p>
             </div>
           )}
 
-          <div className="rounded-xl p-3 flex items-center gap-2 mt-auto bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.04]">
+          <div className="rounded-xl p-3 flex items-center gap-2 mt-auto bg-white dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800/50">
             <Info className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
-            <span className="text-[10px] text-slate-500 dark:text-gray-400 font-mono">
+            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">
               {selectedNode ? 'Click pane to deselect' : `${liveNodes.length} entities mapped in cluster`}
             </span>
           </div>
@@ -910,7 +905,7 @@ export function renderAttackGraphToSvg(
 
       <!-- Legend Layer -->
       <g transform="translate(${legX}, ${legY})">
-        <rect width="${legW}" height="36" rx="8" fill="rgba(10,12,22,0.92)" stroke="rgba(255,255,255,0.08)" />
+        <rect width="${legW}" height="36" rx="8" fill="rgba(10,12,22,0.92)" stroke="rgba(39,39,42,0.5)" />
         <text x="12" y="22" fill="#6b7280" font-size="8" font-weight="800" font-family="'Inter', sans-serif" letter-spacing="1px">NODE TYPES</text>
         <g transform="translate(90, 8)">
           ${legItemsHtml}

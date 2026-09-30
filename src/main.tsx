@@ -5,7 +5,7 @@ import './index.css';
 import { initZoomLock } from './utils/preventZoom';
 import { AppearanceService } from './services/appearanceService';
 
-// Initialize appearance settings (theme preset, glow, animations)
+// Initialize appearance settings (theme preset, animations)
 AppearanceService.init();
 
 // Lock viewport scale at 100% across all devices and input methods

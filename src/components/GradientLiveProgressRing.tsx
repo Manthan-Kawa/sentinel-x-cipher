@@ -61,15 +61,6 @@ export function GradientLiveProgressRing({
               <stop offset="50%" stopColor="#3b82f6" />
               <stop offset="100%" stopColor="#a78bfa" />
             </linearGradient>
-
-            {/* Neon Glow Filter */}
-            <filter id="ringGlow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
           </defs>
 
           {/* Background track circle */}
@@ -78,7 +69,7 @@ export function GradientLiveProgressRing({
             cy="80"
             r={radius}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="rgba(39,39,42,0.5)"
             strokeWidth={strokeWidth}
           />
 
@@ -93,10 +84,9 @@ export function GradientLiveProgressRing({
             strokeDasharray={circumference}
             strokeDashoffset={dashOffset}
             strokeLinecap="round"
-            filter="url(#ringGlow)"
+            
             style={{
-              transition: 'stroke-dashoffset 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
+              transition: 'stroke-dashoffset 0.45s cubic-bezier(0.4, 0, 0.2, 1)' }}
           />
         </svg>
 
@@ -107,9 +97,7 @@ export function GradientLiveProgressRing({
             style={{
               background: 'linear-gradient(135deg, #00d2ff 0%, #3b82f6 50%, #a78bfa 100%)',
               WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 0 10px rgba(0,210,255,0.4))',
-            }}
+              WebkitTextFillColor: 'transparent' }}
           >
             {Math.round(dispVal)}%
           </span>

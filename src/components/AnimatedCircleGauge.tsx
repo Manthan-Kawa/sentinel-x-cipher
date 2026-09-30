@@ -67,15 +67,6 @@ export function AnimatedCircleGauge({
               <stop offset="60%" stopColor={gradientColors[1]} />
               <stop offset="100%" stopColor={gradientColors[2]} />
             </linearGradient>
-
-            {/* Pulsating red neon glow filter (dark mode only) */}
-            <filter id="riskGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
           </defs>
 
           {/* Background track circle */}
@@ -84,7 +75,7 @@ export function AnimatedCircleGauge({
             cy="50"
             r={radius}
             fill="none"
-            stroke={isDark ? "rgba(255,255,255,0.06)" : "#e2e8f0"}
+            stroke={isDark ? "rgba(39,39,42,0.5)" : "#e2e8f0"}
             strokeWidth={strokeWidth}
             shapeRendering="geometricPrecision"
           />
@@ -100,30 +91,27 @@ export function AnimatedCircleGauge({
             strokeDasharray={circumference}
             strokeDashoffset={fillOffset}
             strokeLinecap="round"
-            filter={isDark ? "url(#riskGlow)" : undefined}
             shapeRendering="geometricPrecision"
             style={{
-              transition: 'stroke-dashoffset 1.35s cubic-bezier(0.34, 1.25, 0.64, 1)',
-            }}
+              transition: 'stroke-dashoffset 1.35s cubic-bezier(0.34, 1.25, 0.64, 1)' }}
           />
         </svg>
 
         {/* Center counter text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className={`text-3xl font-black tracking-tight ${isDark ? 'text-white drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-black'}`}>
+          <span className={`text-3xl font-black tracking-tight ${isDark ? 'text-white ' : 'text-black'}`}>
             {Math.round(currentScore)}
           </span>
-          <span className={`text-[10px] font-mono mt-0.5 ${isDark ? 'text-gray-500' : 'text-slate-600 font-semibold'}`}>/ {max}</span>
+          <span className={`text-[10px] font-mono mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500 font-semibold'}`}>/ {max}</span>
         </div>
       </div>
 
       {label && (
         <span
-          className="mt-3 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-red-700 dark:text-red-400"
+          className="mt-3 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white shadow-sm"
           style={{
-            background: isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.1)',
-            border: isDark ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(239,68,68,0.25)',
-            boxShadow: isDark ? '0 0 12px rgba(239,68,68,0.15)' : 'none',
+            background: `linear-gradient(135deg, ${gradientColors[0]}, ${gradientColors[1]})`,
+            border: '1px solid rgba(255,255,255,0.1)'
           }}
         >
           {label}

@@ -11,16 +11,39 @@ html {
   text-size-adjust: 100%;
 }
 
-html,
-body,
-#root {
-  min-height: 100vh;
+@media (min-width: 1024px) {
+  body {
+    zoom: 1.1;
+    overflow: hidden !important;
+  }
+  .locked-h-screen {
+    height: calc(100vh / 1.1) !important;
+    max-height: calc(100vh / 1.1) !important;
+    overflow: hidden !important;
+  }
+  .soc-sidebar {
+    height: calc(100vh / 1.1) !important;
+    max-height: calc(100vh / 1.1) !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+html, body {
+  height: 100%;
+  max-height: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow: hidden;
   margin: 0;
   padding: 0;
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 /* Prevent iOS Safari from auto-zooming viewport on input focus */
@@ -202,9 +225,10 @@ body,
   }
 
   html.dark,
+  html, body { overflow: hidden !important; }
   html.dark body {
     color: #f1f5f9;
-    background-color: #0b0c11;
+    background-color: #000000;
   }
 
   *,
@@ -306,15 +330,8 @@ body,
   }
 
   @keyframes livePulse {
-
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-    }
-
-    50% {
-      box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
   }
 }
 
@@ -334,23 +351,20 @@ body,
     @apply bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 transition-colors duration-200 shadow-sm;
   }
 
-  /* ── Dashboard dark cards ── */
   .dash-card {
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    background: linear-gradient(145deg, #0a0d15, #080b14);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(63,63,70,0.5);
+    background: #27272a;
+    transition: border-color 0.2s ease;
   }
 
   .dash-card:hover {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    border-color: rgba(63,63,70,0.8);
   }
 
   html:not(.dark) .dash-card {
     background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid #e5e7eb !important;
   }
 
   /* ── Buttons ── */
@@ -359,7 +373,7 @@ body,
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-[#0B1528] hover:bg-[#142345] text-white shadow-sm dark:bg-[#00a8ff] dark:hover:bg-[#38bdf8] dark:text-zinc-950 dark:font-bold dark:shadow-md dark:shadow-sky-500/25;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-[#0B1528] hover:bg-[#142345] text-white shadow-sm dark:bg-[#00a8ff] dark:hover:bg-[#38bdf8] dark:text-zinc-950 dark:font-bold dark:shadow-md dark:;
   }
 
   .btn-secondary {
@@ -413,7 +427,7 @@ body,
   }
 
   .nav-item-active {
-    @apply bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white border-l-2 border-slate-900 dark:border-white;
+    @apply bg-blue-600 dark:bg-blue-600 text-white dark:text-white;
   }
 
   /* ── Inputs ── */
@@ -427,15 +441,15 @@ body,
   }
 
   /* ── Glows ── */
-  .glow-blue {
+  .-blue {
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
   }
 
-  .glow-teal {
+  .-teal {
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
   }
 
-  .glow-critical {
+  .-critical {
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
   }
 
@@ -481,6 +495,14 @@ body,
 
   html:not(.dark) .soc-sidebar .text-white {
     color: #0f172a !important;
+  }
+
+  html:not(.dark) .soc-sidebar .nav-item-active,
+  html:not(.dark) .soc-sidebar .nav-item-active *,
+  html:not(.dark) .soc-sidebar .nav-item-active svg,
+  html:not(.dark) .soc-sidebar .nav-item-active span {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
   }
 
   html:not(.dark) .soc-sidebar .text-gray-400 {
@@ -623,65 +645,12 @@ body,
     background-clip: text;
   }
 
-  /* ── Glowing beam-border button (Welcome CTA) ── */
-  .glow-btn {
+  /* Glow border button — removed neon sweep, now plain border */
+  .-btn {
     position: relative;
     isolation: isolate;
     overflow: visible;
-  }
-
-  /* The rotating conic-gradient that creates the neon border sweep */
-  .glow-btn::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: inherit;
-    padding: 2px;
-    background: conic-gradient(from var(--angle, 0deg),
-        transparent 0%,
-        transparent 30%,
-        #60a5fa 45%,
-        #ffffff 50%,
-        #60a5fa 55%,
-        transparent 70%,
-        transparent 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    animation: glow-spin 3s linear infinite;
-    filter: blur(0px);
-  }
-
-  /* Soft outer glow halo */
-  .glow-btn::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: inherit;
-    background: conic-gradient(from var(--angle, 0deg),
-        transparent 0%,
-        transparent 35%,
-        rgba(96, 165, 250, 0.4) 48%,
-        rgba(96, 165, 250, 0.6) 50%,
-        rgba(96, 165, 250, 0.4) 52%,
-        transparent 65%,
-        transparent 100%);
-    animation: glow-spin 3s linear infinite;
-    filter: blur(8px);
-    z-index: -1;
-  }
-
-  @property --angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
-  }
-
-  @keyframes glow-spin {
-    to {
-      --angle: 360deg;
-    }
+    border: 1px solid rgba(96, 165, 250, 0.4);
   }
 }
 
@@ -694,7 +663,7 @@ body,
 [data-theme="Dark Cyber"] {
   --theme-primary: #8b5cf6;
   --theme-primary-rgb: 139, 92, 246;
-  --theme-primary-glow: rgba(139, 92, 246, 0.3);
+  --theme-primary-: rgba(139, 92, 246, 0.3);
   --theme-primary-hover: #7c3aed;
   --theme-bg: #08090e;
   --theme-card-bg: #0c0e18;
@@ -705,7 +674,7 @@ body,
 [data-theme="Obsidian Black"] {
   --theme-primary: #3b82f6;
   --theme-primary-rgb: 59, 130, 246;
-  --theme-primary-glow: rgba(59, 130, 246, 0.3);
+  --theme-primary-: rgba(59, 130, 246, 0.3);
   --theme-primary-hover: #2563eb;
   --theme-bg: #030508;
   --theme-card-bg: #070b12;
@@ -762,7 +731,7 @@ body,
 [data-theme="Cyberpunk Teal"] {
   --theme-primary: #14b8a6;
   --theme-primary-rgb: 20, 184, 166;
-  --theme-primary-glow: rgba(20, 184, 166, 0.3);
+  --theme-primary-: rgba(20, 184, 166, 0.3);
   --theme-primary-hover: #0d9488;
   --theme-bg: #030c10;
   --theme-card-bg: #051419;
@@ -814,7 +783,7 @@ body,
 [data-theme="Crimson Red"] {
   --theme-primary: #ef4444;
   --theme-primary-rgb: 239, 68, 68;
-  --theme-primary-glow: rgba(239, 68, 68, 0.3);
+  --theme-primary-: rgba(239, 68, 68, 0.3);
   --theme-primary-hover: #dc2626;
   --theme-bg: #0a0406;
   --theme-card-bg: #13060a;
@@ -865,16 +834,16 @@ body,
 /* ══════════════════════════════════════════════════════════════════
    NEON GLOW EFFECTS TOGGLE
    ══════════════════════════════════════════════════════════════════ */
-html[data-glow="false"] [style*="boxShadow"],
-html[data-glow="false"] [style*="box-shadow"] {
-  box-shadow: none !important;
-}
 
-html[data-glow="false"] .glow-critical,
-html[data-glow="false"] .glow-btn::after {
-  box-shadow: none !important;
-  filter: none !important;
-}
+
+
+
+
+
+
+
+
+
 
 /* ══════════════════════════════════════════════════════════════════
    SLIDEIN ENTRANCE ANIMATIONS TOGGLE
@@ -889,7 +858,7 @@ html[data-animations="false"] * {
    SYNCHRONIZED THEME TRANSITION
    ══════════════════════════════════════════════════════════════════ */
 html.dark {
-  background-color: #0b0c11;
+  background-color: #000000;
   color-scheme: dark;
 }
 
@@ -965,4 +934,49 @@ html.dark [class*="dark:border-white/8"],
 html.dark [class*="dark:border-white/7"],
 html.dark [class*="dark:border-white/6"] {
   border-color: transparent !important;
+}
+
+
+
+
+
+
+/* ── Sidebar Active & Badge Custom Overrides ── */
+.soc-sidebar .soc-nav-active,
+html.dark .soc-sidebar .soc-nav-active,
+html:not(.dark) .soc-sidebar .soc-nav-active {
+  color: #ffffff !important;
+}
+
+.soc-sidebar .soc-nav-active *,
+.soc-sidebar .soc-nav-active svg,
+.soc-sidebar .soc-nav-active span:not(.soc-badge-solid),
+html.dark .soc-sidebar .soc-nav-active *,
+html.dark .soc-sidebar .soc-nav-active svg,
+html.dark .soc-sidebar .soc-nav-active span:not(.soc-badge-solid),
+html:not(.dark) .soc-sidebar .soc-nav-active *,
+html:not(.dark) .soc-sidebar .soc-nav-active svg,
+html:not(.dark) .soc-sidebar .soc-nav-active span:not(.soc-badge-solid) {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Default counter badge in sidebar: Solid BLUE like navigation with white text */
+.soc-sidebar .soc-badge-solid,
+html.dark .soc-sidebar .soc-badge-solid,
+html:not(.dark) .soc-sidebar .soc-badge-solid {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+/* When on User Requests (active row): turns a distinct contrasting color (solid white with blue text) */
+.soc-sidebar .soc-nav-active .soc-badge-solid,
+html.dark .soc-sidebar .soc-nav-active .soc-badge-solid,
+html:not(.dark) .soc-sidebar .soc-nav-active .soc-badge-solid {
+  background-color: #ffffff !important;
+  color: #2563eb !important;
+  border: none !important;
+  font-weight: 800 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }

@@ -1,7 +1,7 @@
 /**
  * Appearance Service
  * Manages theme presets ('Dark Cyber' | 'Obsidian Black' | 'Cyberpunk Teal' | 'Crimson Red'),
- * animation toggles, and neon glow effects for both User and Analyst portals.
+ * animation toggles, and neon  effects for both User and Analyst portals.
  */
 
 export type ThemePreset = 'Dark Cyber' | 'Obsidian Black' | 'Cyberpunk Teal' | 'Crimson Red';
@@ -24,7 +24,6 @@ export const THEME_PALETTES: Record<
     bg: string;
     cardBg: string;
     border: string;
-    glow: string;
   }
 > = {
   'Dark Cyber': {
@@ -33,7 +32,6 @@ export const THEME_PALETTES: Record<
     bg: '#08090e',
     cardBg: '#0c0e18',
     border: 'rgba(139, 92, 246, 0.25)',
-    glow: 'rgba(139, 92, 246, 0.3)',
   },
   'Obsidian Black': {
     name: 'Obsidian Black',
@@ -41,7 +39,6 @@ export const THEME_PALETTES: Record<
     bg: '#030508',
     cardBg: '#070b12',
     border: 'rgba(59, 130, 246, 0.25)',
-    glow: 'rgba(59, 130, 246, 0.3)',
   },
   'Cyberpunk Teal': {
     name: 'Cyberpunk Teal',
@@ -49,7 +46,6 @@ export const THEME_PALETTES: Record<
     bg: '#030c10',
     cardBg: '#051419',
     border: 'rgba(20, 184, 166, 0.25)',
-    glow: 'rgba(20, 184, 166, 0.3)',
   },
   'Crimson Red': {
     name: 'Crimson Red',
@@ -57,7 +53,6 @@ export const THEME_PALETTES: Record<
     bg: '#0a0406',
     cardBg: '#13060a',
     border: 'rgba(239, 68, 68, 0.25)',
-    glow: 'rgba(239, 68, 68, 0.3)',
   },
 };
 
@@ -68,7 +63,7 @@ export class AppearanceService {
   static getPreferences(userEmail?: string): AppearancePreferences {
     let themePreset: ThemePreset = 'Dark Cyber';
     let animationsEnabled = true;
-    let glowEffects = true;
+    let glowEffects = false;
 
     try {
       const cleanEmail = (userEmail || '').trim().toLowerCase();
@@ -81,9 +76,6 @@ export class AppearanceService {
           }
           if (parsed.animationsEnabled !== undefined) {
             animationsEnabled = Boolean(parsed.animationsEnabled);
-          }
-          if (parsed.glowEffects !== undefined) {
-            glowEffects = Boolean(parsed.glowEffects);
           }
         }
       }
@@ -98,16 +90,11 @@ export class AppearanceService {
       if (savedAnim !== null) {
         animationsEnabled = savedAnim === 'true';
       }
-
-      const savedGlow = localStorage.getItem(KEY_GLOW);
-      if (savedGlow !== null) {
-        glowEffects = savedGlow === 'true';
-      }
     } catch {
       // ignore
     }
 
-    return { themePreset, animationsEnabled, glowEffects };
+    return { themePreset, animationsEnabled, glowEffects: false };
   }
 
   /**
@@ -119,13 +106,13 @@ export class AppearanceService {
     const updated: AppearancePreferences = {
       themePreset: prefs.themePreset ?? current.themePreset,
       animationsEnabled: prefs.animationsEnabled ?? current.animationsEnabled,
-      glowEffects: prefs.glowEffects ?? current.glowEffects,
+      glowEffects: false,
     };
 
     try {
       localStorage.setItem(KEY_THEME, updated.themePreset);
       localStorage.setItem(KEY_ANIMATIONS, String(updated.animationsEnabled));
-      localStorage.setItem(KEY_GLOW, String(updated.glowEffects));
+      localStorage.setItem(KEY_GLOW, 'false');
 
       const cleanEmail = (userEmail || '').trim().toLowerCase();
       if (cleanEmail) {
@@ -137,7 +124,7 @@ export class AppearanceService {
             ...parsed,
             themePreset: updated.themePreset,
             animationsEnabled: updated.animationsEnabled,
-            glowEffects: updated.glowEffects,
+            glowEffects: false,
           })
         );
       }
@@ -150,14 +137,13 @@ export class AppearanceService {
       const root = document.documentElement;
       root.setAttribute('data-theme', updated.themePreset);
       root.setAttribute('data-animations', String(updated.animationsEnabled));
-      root.setAttribute('data-glow', String(updated.glowEffects));
 
       const palette = THEME_PALETTES[updated.themePreset] || THEME_PALETTES['Dark Cyber'];
       root.style.setProperty('--theme-primary', palette.color);
       root.style.setProperty('--theme-bg', palette.bg);
       root.style.setProperty('--theme-card-bg', palette.cardBg);
       root.style.setProperty('--theme-card-border', palette.border);
-      root.style.setProperty('--theme-glow', updated.glowEffects ? palette.glow : 'transparent');
+      root.style.setProperty('--theme-glow', 'none');
     }
 
     // Broadcast event

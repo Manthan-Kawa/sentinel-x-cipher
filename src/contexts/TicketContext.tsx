@@ -579,8 +579,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
         updateTicketStatus,
         getTicketsForUser,
         clearAllTickets,
-        deleteTicket,
-      }}
+        deleteTicket }}
     >
       {children}
     </TicketContext.Provider>

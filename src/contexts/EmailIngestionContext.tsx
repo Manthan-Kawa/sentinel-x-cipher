@@ -511,8 +511,7 @@ export function EmailIngestionProvider({ children }: { children: React.ReactNode
         isGoogleConnected,
         googleProfile,
         connectGoogle,
-        disconnectGoogle,
-      }}
+        disconnectGoogle }}
     >
       {children}
     </EmailIngestionContext.Provider>

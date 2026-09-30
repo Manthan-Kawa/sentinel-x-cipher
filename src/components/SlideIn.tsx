@@ -68,8 +68,7 @@ export function SlideIn({
         ...style,
         opacity: vis ? 1 : 0,
         transform: vis ? 'none' : from,
-        transition: 'opacity .5s cubic-bezier(.22,1,.36,1), transform .5s cubic-bezier(.22,1,.36,1)',
-      }}
+        transition: 'opacity .5s cubic-bezier(.22,1,.36,1), transform .5s cubic-bezier(.22,1,.36,1)' }}
     >
       {children}
     </div>

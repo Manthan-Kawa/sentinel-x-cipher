@@ -405,7 +405,8 @@ export function EvidenceProvider({ children }: { children: React.ReactNode }) {
           ? 'message/rfc822'
           : data.filename.endsWith('.html')
           ? 'text/html'
-          : 'text/plain',
+          : 'application/octet-stream',
+
         isCustom: true,
       };
 
@@ -719,8 +720,7 @@ export function EvidenceProvider({ children }: { children: React.ReactNode }) {
         snapshotOriginTrace,
         snapshotCampaignDossier,
         snapshotAlertEvidence,
-        snapshotReportPackage,
-      }}
+        snapshotReportPackage }}
     >
       {children}
     </EvidenceContext.Provider>

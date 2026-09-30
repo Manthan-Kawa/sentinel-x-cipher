@@ -329,7 +329,7 @@ function fallbackHeuristicEvaluator(
         ? 'Do NOT click links or enter credentials. Escalate this incident to the SOC Security team.'
         : threat_level === 'suspicious'
         ? 'Verify sender identity through out-of-band communication before taking action.'
-        : 'Safe to interact with standard caution.',
+        : 'No action required. Treat email as normal.',
     model_used: 'sentinel-heuristic-v1',
     analyzed_at: new Date().toISOString(),
     is_reviewed: false,

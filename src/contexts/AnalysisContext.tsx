@@ -303,8 +303,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
         deleteCase,
         clearCases,
         loadDemoCase,
-        resetActiveAnalysis,
-      }}
+        resetActiveAnalysis }}
     >
       {children}
     </AnalysisContext.Provider>
